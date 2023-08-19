@@ -7,7 +7,7 @@ import shutil
 import numpy as np
 import pandas as pd
 import multiprocessing
-
+from data_utils import extract_basic_info
 
 def get_title(path):
     hash = {}
@@ -135,13 +135,13 @@ def main():
     file_paths = []
     for root, dirs, files in os.walk(dir_path):
         for name in files:
-            if '年度报告.txt' in name:
-                file_paths.append(os.path.join(root, name))
+            file_paths.append(os.path.join(root, name))
     # num_processes = multiprocessing.cpu_count()
     num_processes = 64
 
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(process_file, file_paths)
+    extract_basic_info()
 
 def convert2csv(input_path, output_path):
     new_lines = []

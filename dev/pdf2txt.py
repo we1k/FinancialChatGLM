@@ -133,28 +133,26 @@ def change_pdf_to_txt(name, output_path='data/lines_txt/'):
         # with open(save_path_2, 'a+', encoding='utf-8') as file:
         #     file.write(str(all_text[key]['inside']) + '\n')
 
-# 文件夹路径
 
-def run(file_names):
-    name_list = []
-    for file_name in file_names:
-        name_list.append(file_name)
-        print(file_name)
-        if os.path.isdir(file_name): continue
-        allname = file_name.split('\\')[-1]
-        date = allname.split('__')[0]
-        name = allname.split('__')[1]
-        year = allname.split('__')[4]
-        change_pdf_to_txt(file_name, output_path='data/lines_txt/')
+def run(file_name):
+    print(file_name)
+    if os.path.isdir(file_name): return
+    allname = file_name.split('\\')[-1]
+    date = allname.split('__')[0]
+    name = allname.split('__')[1]
+    year = allname.split('__')[4]
+    change_pdf_to_txt(file_name, output_path='data/lines_txt/')
 
     
 def main():
-    folder_path = 'data/finQA_smp/content'
+    folder_path = '/tcdata/chatglm_llm_fintech_raw_dataset/allpdf'
     # 获取文件夹内所有文件名称
     file_names = glob.glob(folder_path + '/*')
     file_names = sorted(file_names, reverse=True)
-    print(len(file_names))
     num_processes = 64
+    
+    if not os.path.exists('data/lines_txt'):
+        os.mkdir('data/lines_txt')
     
     with Pool(processes=num_processes) as pool:
         pool.map(run, file_names)
