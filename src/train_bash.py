@@ -1,4 +1,4 @@
-from glmtuner.tuner import get_train_args, run_sft, run_rm, run_ppo
+from glmtuner.tuner import get_train_args, run_sft
 
 
 def main():
@@ -8,11 +8,6 @@ def main():
     print(torch.cuda.get_device_name())
     if general_args.stage == "sft":
         run_sft(model_args, data_args, training_args, finetuning_args)
-    elif general_args.stage == "rm":
-        run_rm(model_args, data_args, training_args, finetuning_args)
-    elif general_args.stage == "ppo":
-        run_ppo(model_args, data_args, training_args, finetuning_args)
-
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)

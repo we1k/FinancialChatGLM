@@ -145,7 +145,7 @@ def run(file_name):
 
     
 def main():
-    folder_path = '/tcdata/chatglm_llm_fintech_raw_dataset/allpdf'
+    folder_path = './tcdata/chatglm_llm_fintech_raw_dataset/allpdf'
     # 获取文件夹内所有文件名称
     file_names = glob.glob(folder_path + '/*')
     file_names = sorted(file_names, reverse=True)

@@ -396,7 +396,7 @@ parse_fn_dict = {
     '4' : parse_analysis,
 }
 
-def parse_question(path='data/questions/test.json'):
+def parse_question(path='./tcdata/parse_question.json'):
     questions = []
     with open(path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
@@ -429,13 +429,15 @@ def parse_question(path='data/questions/test.json'):
             
         
     with open('data/dataset.json', 'w') as file:
-        # json.dump(datasets, file, ensure_ascii=False)
         for question in questions:
             file.write(json.dumps(question, ensure_ascii=False) + '\n')
     
+    with open('data/smp2023/dataset.json', 'w') as file:
+        json.dump(datasets, file, ensure_ascii=False)
 
 # puts into language model dataset
-def get_dataset():
+
+def reconstruct_dataset():
     results = []
     with open('data/result1.json', 'r', encoding='utf-8') as f1, open('data/dataset.json', 'r', encoding='utf-8') as f2:
         for line, answer in zip(f1.readlines(),f2.readlines()):
@@ -460,5 +462,5 @@ def get_dataset():
         
 if __name__ == '__main__':
     parse_question()
-    get_dataset()
+    # reconstruct_dataset()
     # parse_question('data/questions/bug.json')

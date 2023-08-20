@@ -3,9 +3,6 @@
 gpu_num=$(echo $CUDA_VISIBLE_DEVICES | awk -F ',' '{print NF}')
 echo $gpu_num $CUDA_VISIBLE_DEVICES
 
-# 将挂载的数据移动到当前目录
-cp -r /tcdata ./
-
 #1. 将所有pdf文件转化为txt储存
 python dev/pdf2txt.py
 
@@ -19,7 +16,7 @@ python dev/extract_report.py
 python dev/search.py
 
 #5. 使用chatglm进行推断
-bash scripts/eval.sh
+bash scripts/local_eval.sh
 
 #6. post-progress处理
 python dev/post_process.py

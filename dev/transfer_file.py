@@ -2,15 +2,10 @@ import ast
 import re
 import os
 import json
+import multiprocessing
+from multiprocessing import Pool
 
 path = './data/lines_txt/'
-count = 0
-amount = 0
-with open('./basic_information0.json','w') as f:
-    pass
-with open('./basic_information1.json','w') as f:
-    pass
-
 def clearexcel(list, word):
     flag = 0
     for it in list:
@@ -22,18 +17,14 @@ def clearexcel(list, word):
             return it
     return ''
 
-dir_list = os.listdir(path)
-txt_list = [x for x in dir_list if re.match('20.*txt', x)]
 
-for filename in txt_list:
-    #print(foldername)
+def run(filename):
     company = {'文档公司名':'','年份':'','企业名称':'', '外文名称':'-1', '证券简称':'', '证券代码':'', '法定代表人':'', '电子信箱':'', '办公地址':'', '注册地址': '', 
         '公司网址':'', '营业收入':'', '净利润':'', '现金流量净额':'', '每股收益':'', '净资产':'','职工总数':'-1',
         '技术人员数':'-1', '研发人员数':'-1', '研发人员占比':'-1', '硕士人数':'-1', '博士及以上':'-1'}
     company['文档公司名'] = filename.split('__')[-3]
     company['年份'] = filename.split('__')[-2]
     try:
-        #if re.match(".*公司简介和主要财务指标.txt", filename):
         tmp2 = -1
         tmp1 = -1
         flag_cn_name = 0
@@ -52,7 +43,6 @@ for filename in txt_list:
         flag_assets = 0
         tmp = 0
         with open(os.path.join(path, filename), 'r') as f:
-        #with open('./基本信息.txt','r', encoding='utf-8') as f:
             lines = f.readlines()
             for index, line in enumerate(lines):
                 line = re.sub(r'<Page:(\d+)>',r'\1',line)
@@ -206,8 +196,7 @@ for filename in txt_list:
                             '净利润':profit_net, '现金流量净额':clash_flow, '每股收益':s_income}
                     company['每股净资产'] = assets_net 
                 '''
-    #with open('./公司治理.txt','r', encoding='utf-8') as f:
-    #if re.match(".*董事、监事、高级管理人员和员工情况.txt", filename) or re.match(".*公司治理.txt", filename):
+
                 if '教育程度类别' in line_dict['inside']:
                     tmp = 1
                 if '专业构成类别' in line_dict['inside']:
@@ -243,7 +232,7 @@ for filename in txt_list:
                                     company['博士及以上'] = index
                         elif '合计' in line_dict['inside']:
                             tmp = 0
-    #if re.match(".*财务报告.txt", filename) and company['法定代表人'] == '':
+    
                 if company['法定代表人'] == '':
                     if '法定代表人：' in line_dict['inside']:
                         content = line_dict['inside'].split('：')
@@ -259,7 +248,7 @@ for filename in txt_list:
     except IndexError as err:
         print(filename)
         print(err)
-        continue
+        return  
     #print(company)
     flag = 0
     amount = amount + 1
@@ -268,7 +257,27 @@ for filename in txt_list:
             flag = 1
             count = count + 1
             break
-    with open('./basic_information%d.json'%(flag), 'a+') as file:
+    with open('./_basic_information%d.json'%(flag), 'a+') as file:
         json.dump(company, file, ensure_ascii=False)
         file.write('\r')
-print('%d/'%(count)+'%d'%(amount))
+        
+            
+def main():
+    
+    count = 0
+    amount = 0
+    with open('./_basic_information0.json','w') as f:
+        pass
+    with open('./_basic_information1.json','w') as f:
+        pass
+
+    dir_list = os.listdir(path)
+    txt_list = [x for x in dir_list if re.match('20.*txt', x)]
+    
+    num_processes = 48
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        pool.map(run, txt_list)
+    print('%d/'%(count)+'%d'%(amount))
+
+if __name__ == '__main__':
+    main()

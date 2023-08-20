@@ -6,6 +6,7 @@ from collections import defaultdict
 from question_categorize import classify_questions
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
+from data_utils import get_company_name
 
 def has_digit(input_str):
     pattern = r'\d'  # 正则表达式匹配数字的模式
@@ -63,7 +64,8 @@ def get_entities(data):
     return ret
 
 def main():
-    path = 'data/test_questions.json'
+    get_company_name()
+    path = './tcdata/A-list-question.json'
     samples = []
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -133,7 +135,7 @@ def main():
             print(samples[i]['question'])
     
     classify_questions(samples)
-    with open('data/questions/test.json', 'w', encoding='utf-8') as f:
+    with open('./tcdata/parse_question.json', 'w', encoding='utf-8') as f:
         for sample in samples:
             f.write(json.dumps(sample, ensure_ascii=False) + '\n')
         

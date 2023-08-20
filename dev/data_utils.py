@@ -80,7 +80,7 @@ def get_dataset():
             # f.write(json.dumps(result, ensure_ascii=False)+'\n')
 
 def get_company_name():
-    folder_path = 'data/finQA_smp/content'
+    folder_path = './tcdata/chatglm_llm_fintech_raw_dataset/allpdf'
     # 获取文件夹内所有文件名称
     file_names = glob.glob(folder_path + '/*')
     file_names = sorted(file_names, reverse=True)
@@ -97,19 +97,3 @@ def get_company_name():
         name_lists = list(set(name_lists))
     with open('data/company_names.txt', 'w', encoding='utf-8') as f:
         f.write("\n".join(name_lists))
-
-if __name__ == '__main__':
-    # get_company_name()
-    # get_dataset()
-    results = []
-    with open('output/smp_temperature_0.95/generated_predictions.json', 'r', encoding='utf-8') as f1, open('data/dataset.json', 'r', encoding='utf-8') as f2:
-        for line, answer in zip(f1.readlines(),f2.readlines()):
-            result = json.loads(line)
-            dataset = json.loads(answer)
-            if dataset['category'] in [1, 2, 3] and dataset['prompt'] != '':
-                result['answer'] = dataset['prompt']
-                
-            results.append(result)
-    with open('output.json', 'w', encoding='utf-8') as f:
-        for result in results:
-            f.write(json.dumps(result, ensure_ascii=False)+'\n')
