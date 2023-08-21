@@ -274,7 +274,7 @@ def main():
     dir_list = os.listdir(path)
     txt_list = [x for x in dir_list if re.match('20.*txt', x)]
     
-    num_processes = 48
+    num_processes = 20
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(run, txt_list)
     print('%d/'%(count)+'%d'%(amount))

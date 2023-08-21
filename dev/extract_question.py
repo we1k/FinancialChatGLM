@@ -65,7 +65,7 @@ def get_entities(data):
 
 def main():
     get_company_name()
-    path = './tcdata/A-list-question.json'
+    path = '/tcdata/A-list-question.json'
     samples = []
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -80,8 +80,8 @@ def main():
             company_names_dict[name] = short_name
 
     # Load pre-trained model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("ckiplab/bert-base-chinese-ner", cache_dir='./model/')
-    model = AutoModelForTokenClassification.from_pretrained("ckiplab/bert-base-chinese-ner", cache_dir='./model/')
+    tokenizer = AutoTokenizer.from_pretrained("./model/ner_model")
+    model = AutoModelForTokenClassification.from_pretrained("./model/ner_model")
 
     # NER pipeline
     ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer)
@@ -135,7 +135,7 @@ def main():
             print(samples[i]['question'])
     
     classify_questions(samples)
-    with open('./tcdata/parse_question.json', 'w', encoding='utf-8') as f:
+    with open('./data/parse_question.json', 'w', encoding='utf-8') as f:
         for sample in samples:
             f.write(json.dumps(sample, ensure_ascii=False) + '\n')
         
