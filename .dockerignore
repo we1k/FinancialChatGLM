@@ -9,17 +9,13 @@ log/*
 checkpoint/*
 
 pyrightconfig.json
-data/lines_txt/*
-data/tables/*
-tables
 .vscode
-llm_demo
 checkpoint
-flagged
-TODO
 FinanceChatGLM
 tcdata
 
+data/lines_txt/*
+data/tables/*
 
 # output file
 output.json

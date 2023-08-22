@@ -137,7 +137,7 @@ def main():
         for name in files:
             file_paths.append(os.path.join(root, name))
     # num_processes = multiprocessing.cpu_count()
-    num_processes = 20
+    num_processes = 10
 
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(process_file, file_paths)

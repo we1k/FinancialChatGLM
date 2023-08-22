@@ -396,7 +396,7 @@ parse_fn_dict = {
     '4' : parse_analysis,
 }
 
-def parse_question(path='./tcdata/parse_question.json'):
+def parse_question(path='./data/parse_question.json'):
     questions = []
     with open(path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
@@ -462,5 +462,3 @@ def reconstruct_dataset():
         
 if __name__ == '__main__':
     parse_question()
-    # reconstruct_dataset()
-    # parse_question('data/questions/bug.json')

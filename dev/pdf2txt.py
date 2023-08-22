@@ -133,7 +133,6 @@ def change_pdf_to_txt(name, output_path='data/lines_txt/'):
         # with open(save_path_2, 'a+', encoding='utf-8') as file:
         #     file.write(str(all_text[key]['inside']) + '\n')
 
-
 def run(file_name):
     print(file_name)
     if os.path.isdir(file_name): return
@@ -143,13 +142,12 @@ def run(file_name):
     year = allname.split('__')[4]
     change_pdf_to_txt(file_name, output_path='data/lines_txt/')
 
-    
 def main():
-    folder_path = './tcdata/chatglm_llm_fintech_raw_dataset/allpdf'
+    folder_path = '/tcdata/chatglm_llm_fintech_raw_dataset/allpdf'
     # 获取文件夹内所有文件名称
     file_names = glob.glob(folder_path + '/*')
     file_names = sorted(file_names, reverse=True)
-    num_processes = 64
+    num_processes = 8
     
     if not os.path.exists('data/lines_txt'):
         os.mkdir('data/lines_txt')

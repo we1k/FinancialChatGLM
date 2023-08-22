@@ -93,7 +93,7 @@ def make_label(samples):
             
             else:
                 key1, key2 = ratio_key_dict[key]
-                template = f"{company_name}在{date}年的{key1}为{stat_dict[key1]}元，在{date}年的{key1}为{stat_dict[key2]}元，根据公式{key}={key1}/{key2}，得出{company_name}在{date}的{key}是{stat_dict[key]}"
+                template = f"{company_name}在{date}年的{key1}为{stat_dict[key1]}元，在{date}年的{key2}为{stat_dict[key2]}元，根据公式{key}={key1}/{key2}，得出{company_name}在{date}的{key}是{stat_dict[key]}"
                 
         # finacial keys
         elif sample['category'] == 3:
