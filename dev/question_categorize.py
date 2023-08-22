@@ -139,8 +139,7 @@ def classify_questions(samples):
         samples[i]['prompt'] = ''
         if question.startswith("华天酒店2020年法定代表人对比2019年是否相同"):
             cnt = 1
-        if isinstance(samples[i]['Company_name'], list):
-            samples[i]['Company_name'] = ''
+        
         for k, v in vague_mapping.items():
             for x in v:
                 question = question.replace(x, k)

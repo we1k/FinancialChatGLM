@@ -133,8 +133,12 @@ def main():
             
         if len(samples[i]['Company_name']) == 0:
             print(samples[i]['question'])
-    
-    classify_questions(samples)
+            
+        if isinstance(samples[i]['Company_name'], list):
+            samples[i]['Company_name'] = ''
+        
+        classify_questions(samples)
+         
     with open('./data/parse_question.json', 'w', encoding='utf-8') as f:
         for sample in samples:
             f.write(json.dumps(sample, ensure_ascii=False) + '\n')

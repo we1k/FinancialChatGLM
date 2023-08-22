@@ -6,10 +6,8 @@ from transformers import Seq2SeqTrainingArguments, TrainerCallback
 from glmtuner.dsets import DataCollatorForChatGLM, get_dataset, preprocess_dataset, split_dataset
 from glmtuner.extras.callbacks import LogCallback
 from glmtuner.extras.misc import get_logits_processor
-from glmtuner.extras.ploting import plot_loss
 from glmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
 from glmtuner.tuner.core import load_model_and_tokenizer
-from glmtuner.tuner.sft.metric import ComputeMetrics
 from glmtuner.tuner.sft.trainer import Seq2SeqTrainerForChatGLM
 
 
@@ -43,7 +41,6 @@ def run_sft(
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
         **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
     )
 
@@ -59,26 +56,11 @@ def run_sft(
     # Training
     if training_args.do_train:
         train_result = trainer.train()
-        trainer.log_metrics("train", train_result.metrics)
-        trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         trainer.save_model()
-        if trainer.is_world_process_zero() and model_args.plot_loss:
-            plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
-
-    # Evaluation
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
-        if training_args.predict_with_generate: # eval_loss will be wrong if predict_with_generate is enabled
-            metrics.pop("eval_loss", None)
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
+       
 
     # Predict
     if training_args.do_predict:
         predict_results = trainer.predict(dataset, metric_key_prefix="predict", **gen_kwargs)
-        if training_args.predict_with_generate: # predict_loss will be wrong if predict_with_generate is enabled
-            predict_results.metrics.pop("predict_loss", None)
-        trainer.log_metrics("predict", predict_results.metrics)
-        trainer.save_metrics("predict", predict_results.metrics)
         trainer.save_predictions(predict_results)
