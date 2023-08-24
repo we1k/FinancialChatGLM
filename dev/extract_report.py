@@ -124,7 +124,6 @@ def extract_report(path, output_dir):
             name = ''
 
 def process_file(file_path):
-    print(f'extract report of {file_path}')
     company_name = file_path.split('/')[2].split('__')[3]
     year = file_path.split('/')[2].split('__')[4]
     output_dir = f'data/tables/{company_name}__{year}'

@@ -157,16 +157,21 @@ def classify_question(samples):
         ret += [[process.extractOne(word, CANDIDATE_KEY)[0] for word in label.split('和')\
             if process.extractOne(word, CANDIDATE_KEY)[1] > 65] \
             if '联营企业和合营企业投资收益' not in label \
-            else label \
+            else [label] \
             for label in labels]
         
     for i, task_keys in enumerate(ret):
         if samples[i]['Company_name'] == '':
             task_keys = ['特殊问题']
-            
-        task_keys = list({item for key in task_keys \
-            for item in (key.split("和") \
-            if key != "联营企业和合营企业投资收益" else [key])})
+
+        task_key_set = set()
+        for key in task_keys:
+            if key == "联营企业和合营企业投资收益":
+                task_key_set.add(key)
+            else:
+                for item in key.split("和"):
+                    task_key_set.add(item)
+        task_keys = list(task_key_set)
         samples[i]['task_key'] = task_keys
         
             
@@ -238,15 +243,15 @@ def classify_questions(samples):
 
 def main():
     samples = []
-    path = 'data/questions/test.json'
+    path = 'data/parse_question.json'
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             line = json.loads(line)
             samples.append(line)
 
-    classify_questions(samples)
-    with open('data/questions/test.json', 'w', encoding='utf-8') as f:
+    classify_question(samples)
+    with open('data/parse_question.json', 'w', encoding='utf-8') as f:
         for sample in samples:
             f.write(json.dumps(sample, ensure_ascii=False) + '\n')
 
