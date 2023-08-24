@@ -4,6 +4,14 @@ import sys
 import json
 from collections import defaultdict
 
+import torch
+from torch.utils.data import DataLoader, Dataset
+import jieba
+from fuzzywuzzy import process
+from transformers import T5Config, T5Tokenizer, T5ForConditionalGeneration
+
+from constant import CANDIDATE_KEY, RATIO_KEY, BASIC_KEY, FINANCIAL_KEY, ANALYSIS_KEY, VAGUE_MAPPING
+
 def has_digit(input_str):
     pattern = r'\d'  # 正则表达式匹配数字的模式
     return bool(re.search(pattern, input_str))
@@ -94,44 +102,88 @@ ratio_keys = [
 ]
 ratio_keys.sort(key=lambda x:-len(x))
 
-# 公司未来发展的展望 在财务报告的最后！！！！
-vague_mapping = {
-    '法定代表人是否相同' : ['法定代表人相比相同吗', '法定代表人是否都相同', '法定代表人是否有都是相同'],
-    '硕士人数': ['硕士员工人数', '硕士研究生员工数量'],
-    '电子信箱': ['电子邮箱'],
-    '是什么': ['是谁'],
-    '法定代表人是什么': ['法定代表人。'],
-    '简要概述': ['简述'],
-    # '资产总计': ['资产总额'],
-    '公司网址': ['网站'],
-    '职工总数': ['总职工', '员工总数', '职工总人数'],
-    '外文名称': ['英文名称'],
-    '技术人员数': ['技术员工人数'],
-    '企业名称': ['官方注册名称'],
-    '利润比例': ['利润之比'],
-    '利息支出': ['支出利息'],
-    '应付职工薪酬': ['职工薪酬总额'],
-    '控股股东及实控人': ['控股股东及实际控制人'],
-    '研发经费占费用比例': ['研发经费在费用', '研发经费占费用比例'],
-    '研发经费与利润比值': ['研发经费与利润比例'],
-    '研发经费与营业收入比值': ['研发经费与营业收入比例'],
-    '研发人员占职工人数比例': ['研发人员在职工人数中占比例', '研发人员占职工总数人数比例', '研发人员占职工总数比例'],
-    '硕士及以上人员占职工人数比例': ['硕士及以上员工占职工总数比例'],
-    '客户' : ['客户客户'],
-    '三费比重' : ['三费（销售费用、管理费用和财务费用）占比'],
-    '每股收益和每股净资产' : ['每股收益以及每股净资产'],
-    '投资收益占营业收入比率': ['投资收益占营业收入比例'],
-    '收回投资收到现金' : ['收回投资所收到现金', '收回投资所得到现金'],
-}
 
 special_questions = []
 unrecog_questions = []
 
 
+def verbaliser(_str):
+    _str = _str.replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用').replace('学历', '').replace('以及', '和')
+    _str = re.sub(r'(\d+年)(法定代表人)(对比|与)(\d+年)', r'\1与\4\2', _str)
+    
+    for k, v in VAGUE_MAPPING.items():
+        for x in v:
+            _str = _str.replace(x, k)
+        return _str
+    
+class SMP_Dataset(Dataset):
+    def __init__(self, samples, tokenizer, max_length) -> None:
+        self.questions = [verbaliser(sample["question"]) for sample in samples]
+        self.samples = [f"从输入中找出的金融指标名称。\n输入：“{input}”" for input in self.questions]
+        self.tokenizer = tokenizer
+        self.input_ids = tokenizer(self.samples, max_length=max_length, padding=True, truncation=True, return_tensors='pt')['input_ids']
+    
+    def __getitem__(self, index):
+        return self.input_ids[index]
+    
+    def __len__(self):
+        return len(self.samples)
+        
+def classify_question(samples):
+    model_path = "model/T5-model/checkpoint-1000"
+    #Load pretrained model and tokenizer
+    config = T5Config.from_pretrained(model_path)
+    tokenizer = T5Tokenizer.from_pretrained(model_path)
+    model = T5ForConditionalGeneration.from_pretrained(model_path,config=config).cuda()
+    model.resize_token_embeddings(len(tokenizer))
+    model.eval()
+    
+    test_dataset = SMP_Dataset(samples, tokenizer, max_length=64)
+    test_dataloader = DataLoader(test_dataset,batch_size=5,shuffle=False)
+    
+    ret = []
+    for batch in test_dataloader:
+        batch = batch.cuda()
+        
+        logits = model.generate(
+            input_ids=batch,
+            max_length=20, 
+            early_stopping=True,
+        )
+
+        logits=logits[:,1:]
+        labels = tokenizer.batch_decode(logits, skip_special_tokens=True)
+        
+        ret += [[process.extractOne(word, CANDIDATE_KEY)[0] for word in label.split('和')\
+            if process.extractOne(word, CANDIDATE_KEY)[1] > 65] \
+            if '联营企业和合营企业投资收益' not in label \
+            else label \
+            for label in labels]
+        
+    for i, task_keys in enumerate(ret):
+        if samples[i]['Company_name'] == '':
+            task_keys = ['特殊问题']
+            
+        task_keys = list({item for key in task_keys \
+            for item in (key.split("和") \
+            if key != "联营企业和合营企业投资收益" else [key])})
+        samples[i]['task_key'] = task_keys
+        
+            
+        if task_keys[0] in BASIC_KEY:
+            samples[i]['category'] = 1
+        elif task_keys[0] in RATIO_KEY:
+            samples[i]['category'] = 2
+        elif task_keys[0] in FINANCIAL_KEY:
+            samples[i]['category'] = 3
+        elif task_keys[0] in ANALYSIS_KEY:
+            samples[i]['category'] = 4
+        else:
+            samples[i]['category'] = 0
+
 def classify_questions(samples):
     for i in range(len(samples)):
-        question = samples[i]['question'].replace('学历', '').replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用')
-        question = re.sub(r'(\d+年)(法定代表人)(对比|与)(\d+年)', r'\1与\4\2', question)
+        question = verbaliser(samples[i]['question'])
         # print(question)
         if '法定代表人' in question and '相同' in question:
             question = question + '|法定代表人是否相同'
@@ -139,10 +191,6 @@ def classify_questions(samples):
         samples[i]['prompt'] = ''
         if question.startswith("华天酒店2020年法定代表人对比2019年是否相同"):
             cnt = 1
-        
-        for k, v in vague_mapping.items():
-            for x in v:
-                question = question.replace(x, k)
             
         if not has_digit(question):
             samples[i]['category'] = 0
