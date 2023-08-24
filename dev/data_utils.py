@@ -7,7 +7,7 @@ import pandas as pd
 
 def extract_basic_info():
     # readin the basic information json 
-    with open('basic_information0.json', 'r', encoding='utf-8') as f:
+    with open('./data/basic_information.json', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             record = json.loads(line)
             # name = normalize_name(record['企业名称'])
@@ -22,23 +22,6 @@ def extract_basic_info():
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(json.dumps(record, ensure_ascii=False))
                 
-    
-    with open('basic_information1.json', 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            record = json.loads(line)
-            # name = normalize_name(record['企业名称'])
-            name = record['文档公司名']
-            if name == None:
-                print(record['文档公司名'], name)
-                continue
-            
-            if not os.path.exists(f'data/tables/{name}__{record["年份"]}'):
-                os.mkdir(f'data/tables/{name}__{record["年份"]}')
-            file_path = f'data/tables/{name}__{record["年份"]}/基本信息表.json'
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(json.dumps(record, ensure_ascii=False))
-
-
 def extract_special_question():
     results = []
     with open('data/result.json', 'r', encoding='utf-8') as f1, open('data/dataset.json', 'r', encoding='utf-8') as f2:

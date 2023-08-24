@@ -130,7 +130,7 @@ class SMP_Dataset(Dataset):
         return len(self.samples)
         
 def classify_question(samples):
-    model_path = "model/T5-model/checkpoint-1000"
+    model_path = "model/smp_question_clf/checkpoint-2000"
     #Load pretrained model and tokenizer
     config = T5Config.from_pretrained(model_path)
     tokenizer = T5Tokenizer.from_pretrained(model_path)
@@ -153,7 +153,6 @@ def classify_question(samples):
 
         logits=logits[:,1:]
         labels = tokenizer.batch_decode(logits, skip_special_tokens=True)
-        
         ret += [[process.extractOne(word, CANDIDATE_KEY)[0] for word in label.split('和')\
             if process.extractOne(word, CANDIDATE_KEY)[1] > 65] \
             if '联营企业和合营企业投资收益' not in label \

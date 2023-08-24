@@ -3,7 +3,7 @@ import re
 import sys
 import json
 from collections import defaultdict
-from question_categorize import classify_questions
+from question_categorize import classify_questions, classify_question
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
 from data_utils import get_company_name
@@ -64,8 +64,8 @@ def get_entities(data):
     return ret
 
 def main():
-    get_company_name()
-    path = '/tcdata/A-list-question.json'
+    # get_company_name()
+    path = './tcdata/A-list-question.json'
     samples = []
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -97,7 +97,7 @@ def main():
         samples[i]['Company_name'] = ''
         if not has_digit(samples[i]['question']): continue
         samples[i]['DATE'] = extract_numbers(samples[i]['question'])
-        
+        samples[i]['question'] = samples[i]['question'].replace("(", "").replace(")", "")
         
         for company_name in list(company_names_dict.keys()):
             if company_name in samples[i]['question'] and len(company_names_dict[company_name].replace('股份', '')) > len(samples[i]['Company_name']):
@@ -136,8 +136,8 @@ def main():
             
         if isinstance(samples[i]['Company_name'], list):
             samples[i]['Company_name'] = ''
-        
-        classify_questions(samples)
+      
+    classify_question(samples)
          
     with open('./data/parse_question.json', 'w', encoding='utf-8') as f:
         for sample in samples:
