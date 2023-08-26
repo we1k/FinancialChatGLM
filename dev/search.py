@@ -67,11 +67,9 @@ def search_table(company_name, date, key):
         if len(file_path) == 0:
             raise KeyError(f'{dir_name}/合并利润表.csv not exists')
         
-    elif key in ['现金及现金等价物余额', '期末现金及现金等价物余额', '现金及现金等价物净增加额', '收回投资收到现金', '投资支付', '经营活动现金流入', '经营活动现金流出',
+    elif key in ['现金及现金等价物余额', '期末现金及现金等价物余额', '现金及现金等价物净增加额', '收回投资收到的现金', '投资支付', '经营活动现金流入', '经营活动现金流出',
     '投资活动现金流入', '投资活动现金流出', '筹资活动现金流出',
     '筹资活动现金流入', '各项税费']:
-        if key == '现金及现金等价物余额': key = '期末现金及现金等价物余额'
-        if key == '收回投资收到现金': key = '收回投资收到的现金'
         file_path = contain_table('合并现金流量表', file_paths)
         if len(file_path) == 0:
             raise KeyError(f'{dir_name}/合并现金流量表.csv not exists')

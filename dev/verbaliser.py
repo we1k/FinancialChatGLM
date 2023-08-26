@@ -15,14 +15,10 @@ ratio_key_dict = {
     "营业成本率" : ["营业成本", "营业收入"],
     "营业利润率" : ["营业利润", "营业收入"],
     "投资收益占营业收入比率" : ["投资收益", "营业收入"],
-    "研发经费与营业收入比值" : ["研发费用", "营业收入"],
-    "研发经费与利润比值" : ["研发费用", "净利润"],
-    "研发人员占职工人数比例" : ["研发人员数", "职工总数"]
-    # "速动比率" : ["", ""],
-    # "毛利率" : ["", ""],
-    # "研发经费占费用比例" : ["", ""],
-    # "三费比重" : ["", ""],
-    # 企业硕士及以上人员占职工人数比例
+    "企业研发经费与营业收入比值" : ["研发费用", "营业收入"],
+    "企业研发经费与利润比值" : ["研发费用", "净利润"],
+    "研发人员占职工人数比例" : ["研发人员数", "职工总数"],
+    "净资产收益率" : ["净利润", "净资产"],
 }
 
 
@@ -46,6 +42,8 @@ def make_key_label(category, key, stat_dict, company_name, date):
                 template = f"{company_name}在{date}与{date+1}的法定代表人是相同，法定代表人均是{ret[1]}。"
             elif ret[0] == '不相同':
                 template = f"{company_name}在{date}与{date+1}的法定代表人是不相同的。在{date}的法定代表人是{ret[1]}，在{date+1}的法定代表人是{ret[2]}。"
+        elif key in ['职工总数', '技术人员数', '博士及以上', '硕士人数', '研发人员数']:
+            template = f"{company_name}在{date}的{key}是{stat_dict[key]}人。"
         else:
             template = f"{company_name}在{date}的{key}是{stat_dict[key]}。"
     
@@ -70,15 +68,15 @@ def make_key_label(category, key, stat_dict, company_name, date):
             template = f"{company_name}在{date}年的流动资产合计为{stat_dict['流动资产']}元，在{date}年的存货为{stat_dict['存货']}元，在{date}年的流动负债合计为{stat_dict['流动负债']}元，根据公式速动比率=(流动资产-存货)/流动负债,得出{company_name}在{date}年的速动比率是{stat_dict[key]}。"
             
         elif key == '毛利率':
-            template = f"{company_name}在{date}年的营业收入为{stat_dict['营业收入']}元，在{date}年的营业成本为{stat_dict['营业成本']}元，根据公式速动比率=(营业收入-营业成本)/营业收入,得出{company_name}在{date}年的毛利率是{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的营业收入为{stat_dict['营业收入']}元，在{date}年的营业成本为{stat_dict['营业成本']}元，根据公式毛利率=(营业收入-营业成本)/营业收入,得出{company_name}在{date}年的毛利率是{stat_dict[key]}。"
             
-        elif key == '研发经费占费用比例':
+        elif key == '企业研发经费占费用比例':
             template = f"{company_name}在{date}年的研发费用为{stat_dict['研发费用']}元，销售费用为{stat_dict['销售费用']}元，财务费用为{stat_dict['财务费用']}元，管理费用为{stat_dict['管理费用']}元，根据公式，企业研发经费占费用比例=研发费用/(销售费用+管理费用+财务费用+研发费用), 得出结果为{date}年{company_name}的企业研发经费占费用比例是{stat_dict[key]}。"
             
         elif key == '三费比重':
             template = f"{company_name}在{date}年的销售费用为{stat_dict['销售费用']}元，管理费用为{stat_dict['管理费用']}元，财务费用为{stat_dict['财务费用']}元，营业收入为{stat_dict['营业收入']}元，根据公式，三费比重 = ( 销售费用 + 管理费用 + 财务费用) / 营业收入, 得出结果为{company_name}在{date}年的三费比重是{stat_dict[key]}。"
         
-        elif key == '硕士及以上人员占职工人数比例':
+        elif key == '企业硕士及以上人员占职工人数比例':
             template = f"{company_name}在{date}年的硕士人数是{stat_dict['硕士人数']}人，博士及以上人数是{stat_dict['博士及以上']}人，职工总数是{stat_dict['职工总数']}，根据公式，企业硕士及以上人员占职工人数比例 = ( 硕士人数 + 博士及以上人数) / 职工总数。得出结果为{company_name}在{date}年的企业硕士及以上人员占职工人数比例{stat_dict[key]}。"
             
         elif key == '比例':
@@ -87,11 +85,13 @@ def make_key_label(category, key, stat_dict, company_name, date):
         else:
             key1, key2 = ratio_key_dict[key]
             template = f"{company_name}在{date}年的{key1}为{stat_dict[key1]}元，在{date}年的{key2}为{stat_dict[key2]}元，根据公式{key}={key1}/{key2}，得出{company_name}在{date}的{key}是{stat_dict[key]}。"
-            
+            if key == "研发人员占职工人数比例":
+                template = template.replace("元", "人")
+                        
     # finacial keys
     elif category == 3:
         date = int(date[0])
-        if '和' in key and key != '联营企业和合营企业投资收益':
+        if '和' in key and key != '联营企业和合营企业的投资收益':
             key1, key2 = key.split('和')[0], key.split('和')[1]
             template = f"{company_name}在{date}年的{key1}是{stat_dict[key1]}元，{key2}是{stat_dict[key2]}元。"
         else:
