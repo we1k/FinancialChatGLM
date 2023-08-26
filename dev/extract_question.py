@@ -3,7 +3,7 @@ import re
 import sys
 import json
 from collections import defaultdict
-from question_categorize import classify_questions, classify_question
+from question_categorize import classify_questions
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
 from data_utils import get_company_name
@@ -65,7 +65,7 @@ def get_entities(data):
 
 def main():
     # get_company_name()
-    path = './tcdata/A-list-question.json'
+    path = './tcdata/B-list-question.json'
     samples = []
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -137,7 +137,7 @@ def main():
         if isinstance(samples[i]['Company_name'], list):
             samples[i]['Company_name'] = ''
       
-    classify_question(samples)
+    classify_questions(samples)
          
     with open('./data/parse_question.json', 'w', encoding='utf-8') as f:
         for sample in samples:
