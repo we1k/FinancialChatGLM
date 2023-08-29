@@ -100,6 +100,11 @@ def make_key_label(category, key, stat_dict, company_name, date):
     elif category == 4:
         pass
 
+    # SQL query
+    elif category == 5:
+        date = int(date[0])
+        template = f"根据信息已知： 在{date}年的满足{key}题目要求的上市公司是{stat_dict[key]}"
+
     elif stat_dict == None:
         # 无法回答的问题
         template = f'*****'

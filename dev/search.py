@@ -3,6 +3,8 @@ import sys
 import json
 import shutil
 import pandas as pd
+import sqlite3
+from constant import DEBT_KEY, CASH_KEY
 
 from verbaliser import make_label
 
@@ -53,7 +55,7 @@ def search_table(company_name, date, key):
     
     if key in ['股本', '负债合计', '应付职工薪酬', '资产总计', '衍生金融资产', '应收款项融资', '其他非流动金融资产', '货币资金', '固定资产', '无形资产', '流动资产合计', '流动负债合计', '非流动负债合计', '存货', '非流动资产合计',
     '交易性金融资产', '应收账款', '预付款项', '应付账款', 
-    '其他非流动资产', '短期借款', '在建工程', '资本公积',
+    '其他流动资产', '其他非流动资产', '短期借款', '在建工程', '资本公积',
     '盈余公积', '未分配利润', '递延所得税负债']:
         file_path = contain_table('合并资产负债表', file_paths)
         if len(file_path) == 0:
@@ -165,22 +167,27 @@ def parse_basic_info(item):
             ret = search_json(company_name, date, "法定代表人")
        
         elif key == '法定代表人是否相同':
-            if item['DATE'][0] > item['DATE'][1]:
-                item['DATE'][0], item['DATE'][1] = item['DATE'][1], item['DATE'][0]
-            start_date, last_date = int(item['DATE'][0]), int(item['DATE'][1])
-                
-            cur_TL = search_json(company_name, start_date, "法定代表人")
-            date = int(start_date) + 1
-            ret_name = [cur_TL]
+            item['DATE'] = list(map(int, item['DATE']))
+            if len(item['DATE']) == 1:
+                if "上一年" in item['question'] or "上年" in item['question'] or "去年" in item['question']:
+                    item['DATE'].append(item['DATE'][0]-1)
+                elif "前两年" in item['question']:
+                    item['DATE'].append(item['DATE'][0]-1)
+                    item['DATE'].append(item['DATE'][0]-2)
+
+            item['DATE'].sort()
+            
+            cur_TL = search_json(company_name, item['DATE'][0], "法定代表人")
+            date = int(item['DATE'][0]) + 1
+            ret_name = []
             ret = '相同'
-            while date <= last_date:
+            for date in item['DATE']:
                 TL = search_json(company_name, date, "法定代表人")
                 ret_name.append(TL)
                 if TL != cur_TL:
                     ret = '不相同'
                     break
-                date += 1
-            ret = ret + '|' + ret_name[0] + '|' + ret_name[1]
+            ret = ret + "|" + "|".join(ret_name)
         
         elif key == '企业名称':
             company_names_dict = {}
@@ -378,6 +385,95 @@ def parse_special(item):
 def parse_analysis(item):
     pass
 
+def parse_sql(item):
+    """
+        输入: item 一个字典，字段包含
+        {"id": int 问题id
+        "question": str 问题字符串
+        "DATE": List[str] 询问的年份
+        "Company_name": str 公司名
+        "category" : int 问题分类
+        "task_key" : List[strs] 用于识别SQL关键词
+        "location" : str: "None" 代表没有地址
+        "rank" : 最高 -> 1，第X高 - > X，最低 -> -1
+        "range" : bool，rank表示范围（T）还是第n（F）
+        "require_money" : bool，需要金额（T）与否（F）
+        }
+
+        输出: item 一个字典，新增加字段包含
+        "SQLquery" : 
+        }
+    """
+    ####SELECT
+    key = item['task_key'][0]
+    item['SQLquery'] = "SELECT 公司名称"
+    if item['require_money'] == True:
+        item['SQLquery'] = item['SQLquery'] + ", " + key
+    
+    ####FROM
+    if key in DEBT_KEY:
+        item['SQLquery'] = item['SQLquery'] + " FROM debt"
+    elif key in CASH_KEY:
+        item['SQLquery'] = item['SQLquery'] + " FROM cash"
+    else:
+        item['SQLquery'] = item['SQLquery'] + " FROM profit"
+    
+    ####WHERE
+    flag = 0
+    if len(item['DATE']) > 1:
+        if flag == 0:
+            item['SQLquery'] = item['SQLquery'] + " WHERE"
+            flag = 1
+        else:
+            item['SQLquery'] = item['SQLquery'] + " AND"
+        item['SQLquery'] = item['SQLquery'] + " 年份 BETWEEN " + item['DATE'][0] + " AND " + item['DATE'][1]
+    elif len(item['DATE']) == 1:
+        if flag == 0:
+            item['SQLquery'] = item['SQLquery'] + " WHERE"
+            flag = 1
+        else:
+            item['SQLquery'] = item['SQLquery'] + " AND"
+        item['SQLquery'] = item['SQLquery'] + " 年份 = " + item['DATE'][0]
+    if item['location'] != "None":
+        if flag == 0:
+            item['SQLquery'] = item['SQLquery'] + " WHERE"
+            flag = 1
+        else:
+            item['SQLquery'] = item['SQLquery'] + " AND"
+        item['SQLquery'] = item['SQLquery'] + " 注册地址 = " + item['location']
+    
+    ###ORDER BY
+    item['SQLquery'] = item['SQLquery'] + " ORDER BY " + key
+    if item['range'] == True:
+        if item['rank'] > 0:
+            item['SQLquery'] = item['SQLquery'] + " DESC LIMIT " + str(item['rank'])
+        else:
+            item['SQLquery'] = item['SQLquery'] + " ASC LIMIT " + str(abs(item['rank']))
+    elif abs(item['rank']) > 1:
+        if item['rank'] > 0:
+            item['SQLquery'] = item['SQLquery'] + " DESC LIMIT 1 OFFSET " + str(item['rank'] - 1)
+        else:
+            item['SQLquery'] = item['SQLquery'] + " ASC LIMIT 1 OFFSET " + str(abs(item['rank']) - 1)
+    else:
+        if item['rank'] > 0:
+            item['SQLquery'] = item['SQLquery'] + " DESC LIMIT 1"
+        else:
+            item['SQLquery'] = item['SQLquery'] + " ASC LIMIT 1"
+    
+
+    # 执行SQL
+    conn = sqlite3.connect('./company.db')
+    cursor = conn.cursor()
+    try:
+        cursor.execute(item['SQLquery'])
+        sql_ret = cursor.fetchall()
+        item['stat_dict'] = {}
+        item['stat_dict'][key] = sql_ret
+    except Exception as e:
+        print(e)
+        sql_ret = ""
+
+    item['stat_dict'] = {key: sql_ret}
 
 parse_fn_dict = {
     '0' : parse_special,
@@ -385,6 +481,7 @@ parse_fn_dict = {
     '2' : parse_ratio,
     '3' : parse_finacial,
     '4' : parse_analysis,
+    '5' : parse_sql,
 }
 
 def parse_question(path='./data/parse_question.json'):

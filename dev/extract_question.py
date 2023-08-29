@@ -64,13 +64,16 @@ def get_entities(data):
     return ret
 
 def main():
-    # get_company_name()
-    path = './tcdata/B-list-question.json'
+    # path = '/tcdata/B-list-question.json'
+    path = './tcdata/b_test.json'
+    # path = './data/parse_question.json'
     samples = []
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             line = json.loads(line)
+            if 'answer' in line:
+                del line['answer']
             samples.append(line)
 
     company_names_dict = {}
@@ -124,15 +127,12 @@ def main():
                     
         # if not in the company dict, using NER MODEL
         if samples[i]['Company_name'] == '':
-            print(samples[i]['question'], samples[i]['id'])
             results = ner_pipeline(samples[i]['question'])
             entities = get_entities(results)
-            print(entities['ORG'])
+            # print(samples[i]['question'], samples[i]['id'])
+            # print(entities['ORG'])
             samples[i]['Company_name'] = entities['ORG']
 
-            
-        if len(samples[i]['Company_name']) == 0:
-            print(samples[i]['question'])
             
         if isinstance(samples[i]['Company_name'], list):
             samples[i]['Company_name'] = ''
