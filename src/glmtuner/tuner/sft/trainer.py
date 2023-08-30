@@ -10,7 +10,6 @@ from glmtuner.extras.constants import IGNORE_INDEX
 from glmtuner.extras.logging import get_logger
 from glmtuner.tuner.core.trainer import PeftTrainer
 
-
 logger = get_logger(__name__)
 
 
@@ -60,7 +59,7 @@ class Seq2SeqTrainerForChatGLM(PeftTrainer):
         decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
 
         res = []
-        with open('/tcdata/A-list-question.json', 'r', encoding='utf-8') as f:
+        with open('/tcdata/B-list-question.json', 'r', encoding='utf-8') as f:
             for line, pred in zip(f.readlines(), decoded_preds):
                 sample = json.loads(line)
                 sample['answer'] = pred
