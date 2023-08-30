@@ -4,42 +4,13 @@ import re
 import json
 import csv
 
-debtkey = ['公司名称', '年份', '注册地址', '负债合计', '应付职工薪酬', '资产总计', '非流动资产合计', '应收款项融资', '货币资金', 
-            '衍生金融资产', '其他非流动金融资产',
-            '固定资产', '无形资产', '存货', '股本',
-            '交易性金融资产', '应收账款', '预付款项', '应付账款', 
-            '其他非流动资产', '短期借款', '在建工程', '资本公积',
-            '盈余公积', '未分配利润', '递延所得税负债']
-
-profitkey = ['公司名称', '年份', '注册地址', '营业利润', '营业成本', '营业收入',
-            '营业外支出', '营业外收入',
-            '利息支出', '利息收入',
-            '投资收益', '变动收益',
-            '研发费用', '财务费用', 
-            '销售费用', '管理费用', 
-            '利润总额', '净利润', 
-            '所得税费用', '综合收益总额', '税金及附加', 
-            '联营企业和合营企业投资收益',
-            '公允价值变动收益',
-            '信用减值损失', '资产减值损失', '资产处置收益',
-            '持续经营净利润', '营业总收入', '营业总成本']
-
-cashkey = ['公司名称', '年份', '注册地址', '收回投资收到现金', '现金及现金等价物余额', 
-            '投资支付', '经营活动现金流入', '经营活动现金流出',
-            '投资活动现金流入', '投资活动现金流出', '筹资活动现金流出',
-            '筹资活动现金流入', '现金及现金等价物净增加额']
-
-keymapping = {
-    "联营企业和合营企业投资收益" : "联营企业和合营企业的投资收益",
-    "收回投资收到现金" : "收回投资收到的现金",
-    "现金及现金等价物余额"  : "期末现金及现金等价物余额"
-}
+from constant import DEBT_KEY, PROFIT_KEY, CASH_KEY, KEY_REMAPPING
 
 path = './data/tables/'
 
 def create_debt(foldername):
     try:
-        empty_debt = [0] * 26
+        empty_debt = [0] * len(DEBT_KEY)
         for filename in os.listdir(path+foldername):
             if re.match("基本信息表.json", filename):
                 with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
@@ -63,10 +34,10 @@ def create_debt(foldername):
                         continue
                     for row in sheet:
                         table.append([row[index1], row[index2]])
-                    for i in range(3, 26):
+                    for i in range(3, len(DEBT_KEY)):
                         minlength = 99
                         for item in table:
-                            if debtkey[i] in item[0]:
+                            if DEBT_KEY[i] in item[0]:
                                 if len(item[0]) < minlength:
                                     if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
                                         empty_debt[i] = 0
@@ -85,7 +56,7 @@ def create_debt(foldername):
 
 def create_profit(foldername):
     try:
-        empty_profit = [0] * 29
+        empty_profit = [0] * len(PROFIT_KEY)
         for filename in os.listdir(path+foldername):
             if re.match("基本信息表.json", filename):
                 with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
@@ -109,10 +80,10 @@ def create_profit(foldername):
                         continue
                     for row in sheet:
                         table.append([row[index1], row[index2]])
-                    for i in range(3, 29):
+                    for i in range(3, len(PROFIT_KEY)):
                         minlength = 99
                         for item in table:
-                            if profitkey[i] in item[0] or (i == 21 and keymapping[profitkey[i]] in item[0]):
+                            if PROFIT_KEY[i] in item[0] or (KEY_REMAPPING.get(PROFIT_KEY[i], "None") in item[0]):
                                 if len(item[0]) < minlength:
                                     if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
                                         empty_profit[i] = 0
@@ -127,7 +98,7 @@ def create_profit(foldername):
 
 def create_cash(foldername):
     try:
-        empty_cash = [0] * 13
+        empty_cash = [0] * len(CASH_KEY)
         for filename in os.listdir(path+foldername):
             if re.match("基本信息表.json", filename):
                 with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
@@ -151,10 +122,10 @@ def create_cash(foldername):
                         continue
                     for row in sheet:
                         table.append([row[index1], row[index2]])
-                    for i in range(3, 13):
+                    for i in range(3, len(CASH_KEY)):
                         minlength = 99
                         for item in table:
-                            if cashkey[i] in item[0] or ((i == 3 or i == 4) and keymapping[cashkey[i]] in item[0]):
+                            if CASH_KEY[i] in item[0] or (KEY_REMAPPING.get(CASH_KEY[i], "None") in item[0]):
                                 if len(item[0]) < minlength:
                                     if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
                                         empty_cash[i] = 0
@@ -183,6 +154,7 @@ def create_db():
                     负债合计 DECIMAL(20, 2),
                     应付职工薪酬 DECIMAL(20, 2),
                     资产总计 DECIMAL(20, 2),
+                    流动资产合计 DECIMAL(20, 2),
                     非流动资产合计 DECIMAL(20, 2),
                     应收款项融资 DECIMAL(20, 2),
                     货币资金 DECIMAL(20, 2),
@@ -196,6 +168,7 @@ def create_db():
                     应收账款 DECIMAL(20, 2),
                     预付款项 DECIMAL(20, 2),
                     应付账款 DECIMAL(20, 2),
+                    其他流动资产 DECIMAL(20, 2),
                     其他非流动资产 DECIMAL(20, 2),
                     短期借款 DECIMAL(20, 2),
                     在建工程 DECIMAL(20, 2),
@@ -256,7 +229,7 @@ def create_db():
     # for foldername in os.listdir(path):
     #     command = create_profit(foldername)
 
-    with open('./tcdata/B-list-pdf-name.txt','r',encoding='utf-8') as f:
+    with open('/tcdata/B-list-pdf-name.txt','r',encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             parts = line.split('__')
@@ -279,7 +252,7 @@ def create_db():
             
             conn.commit()
     # test on db
-    # cursor.execute("SELECT 公司名称, 年份, 货币资金 FROM debt ORDER BY 货币资金 DESC LIMIT 10")
+    # cursor.execute("SELECT 公司名称, 年份, 注册地址 FROM debt WHERE 注册地址 LIKE '%成都%'")
     # rows = cursor.fetchall()
     # for row in rows:
     #     print(row)
