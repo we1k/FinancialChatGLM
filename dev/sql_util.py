@@ -82,8 +82,9 @@ location_pattern = re.compile(r'(上海|北京|南京|无锡|苏州|杭州|深�
 keyword_pattern = re.compile(r'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润)')
 
 def parse_sql_task(samples):
-    tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm2-6b", trust_remote_code=True)
-    model = AutoModel.from_pretrained("THUDM/chatglm2-6b", trust_remote_code=True).half().cuda()
+    model_path = "/tcdata/chatglm2-6b-hug"
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    model = AutoModel.from_pretrained(model_path, trust_remote_code=True).half().cuda()
 
     for sample in samples:
         question = sample['question']
@@ -127,7 +128,6 @@ def parse_sql_task(samples):
             # 使用chatglm进行匹配
             query = "简洁专业的提取出关键词:" + sample['question']
             ret,_ = model.chat(tokenizer, query, temperature=0.01, history=[])
-            print(sample['question'], ret)
             keyword = output_parser(ret)
         
         # 加上fuzzywuzzy

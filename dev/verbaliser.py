@@ -22,7 +22,7 @@ ratio_key_dict = {
 }
 
 
-def make_key_label(category, key, stat_dict, company_name, date):
+def make_key_label(category, key, stat_dict, company_name, date, company_names_dict):
     if stat_dict[key] == f"没有查询到对应的信息,无法回答":
         return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息,无法回答。"
     template = f"NOT implement"
@@ -65,19 +65,19 @@ def make_key_label(category, key, stat_dict, company_name, date):
             template = f"{company_name}在{date-1}年的{_key}为{stat_dict['去年']}元，在{date}年的{_key}为{stat_dict['今年']}元，根据公式{key}=({_key}-上年{_key})/上年{_key}，得出{company_name}在{date}年的{key}是{stat_dict[key]}。"
         
         elif key == '速动比率':
-            template = f"{company_name}在{date}年的流动资产合计为{stat_dict['流动资产']}元，在{date}年的存货为{stat_dict['存货']}元，在{date}年的流动负债合计为{stat_dict['流动负债']}元，根据公式速动比率=(流动资产-存货)/流动负债,得出{company_name}在{date}年的速动比率是{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的流动资产合计为{stat_dict['流动资产']}元，在{date}年的存货为{stat_dict['存货']}元，在{date}年的流动负债合计为{stat_dict['流动负债']}元，根据公式速动比率=(流动资产-存货)/流动负债，得出{company_name}在{date}年的速动比率是{stat_dict[key]}。"
             
         elif key == '毛利率':
-            template = f"{company_name}在{date}年的营业收入为{stat_dict['营业收入']}元，在{date}年的营业成本为{stat_dict['营业成本']}元，根据公式毛利率=(营业收入-营业成本)/营业收入,得出{company_name}在{date}年的毛利率是{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的营业收入为{stat_dict['营业收入']}元，在{date}年的营业成本为{stat_dict['营业成本']}元，根据公式毛利率=(营业收入-营业成本)/营业收入，得出{company_name}在{date}年的毛利率是{stat_dict[key]}。"
             
         elif key == '企业研发经费占费用比例':
-            template = f"{company_name}在{date}年的研发费用为{stat_dict['研发费用']}元，销售费用为{stat_dict['销售费用']}元，财务费用为{stat_dict['财务费用']}元，管理费用为{stat_dict['管理费用']}元，根据公式，企业研发经费占费用比例=研发费用/(销售费用+管理费用+财务费用+研发费用), 得出结果为{date}年{company_name}的企业研发经费占费用比例是{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的研发费用为{stat_dict['研发费用']}元，销售费用为{stat_dict['销售费用']}元，财务费用为{stat_dict['财务费用']}元，管理费用为{stat_dict['管理费用']}元，根据公式，企业研发经费占费用比例=研发费用/(销售费用+管理费用+财务费用+研发费用)，得出结果为{date}年{company_name}的企业研发经费占费用比例是{stat_dict[key]}。"
             
         elif key == '三费比重':
-            template = f"{company_name}在{date}年的销售费用为{stat_dict['销售费用']}元，管理费用为{stat_dict['管理费用']}元，财务费用为{stat_dict['财务费用']}元，营业收入为{stat_dict['营业收入']}元，根据公式，三费比重 = ( 销售费用 + 管理费用 + 财务费用) / 营业收入, 得出结果为{company_name}在{date}年的三费比重是{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的销售费用为{stat_dict['销售费用']}元，管理费用为{stat_dict['管理费用']}元，财务费用为{stat_dict['财务费用']}元，营业收入为{stat_dict['营业收入']}元，根据公式，三费比重=(销售费用+管理费用+财务费用)/营业收入，得出结果为{company_name}在{date}年的三费比重是{stat_dict[key]}。"
         
         elif key == '企业硕士及以上人员占职工人数比例':
-            template = f"{company_name}在{date}年的硕士人数是{stat_dict['硕士人数']}人，博士及以上人数是{stat_dict['博士及以上']}人，职工总数是{stat_dict['职工总数']}，根据公式，企业硕士及以上人员占职工人数比例 = ( 硕士人数 + 博士及以上人数) / 职工总数。得出结果为{company_name}在{date}年的企业硕士及以上人员占职工人数比例{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的硕士人数是{stat_dict['硕士人数']}人，博士及以上人数是{stat_dict['博士及以上']}人，职工总数是{stat_dict['职工总数']}，根据公式，企业硕士及以上人员占职工人数比例=(硕士人数+博士及以上人数)/职工总数，得出结果为{company_name}在{date}年的企业硕士及以上人员占职工人数比例{stat_dict[key]}。"
             
         elif key == '比例':
             pass
@@ -103,7 +103,15 @@ def make_key_label(category, key, stat_dict, company_name, date):
     # SQL query
     elif category == 5:
         date = int(date[0])
-        template = f"根据信息已知： 在{date}年的满足{key}题目要求的上市公司是{stat_dict[key]}"
+        if len(stat_dict[key]) == 0:
+            template = f"在{date}年的满足{key}题目要求的上市公司是{stat_dict[key]}"
+        else:
+            template = f"在{date}年的满足{key}题目要求的上市公司有:"
+            for ans in stat_dict[key]:
+                template += f"{company_names_dict[ans[0]]}，简称{ans[0]}。"
+                if len(ans) > 1:
+                    template += f"金额是{str(ans[1]) + '元'}。"
+                    
 
     elif stat_dict == None:
         # 无法回答的问题
@@ -113,6 +121,13 @@ def make_key_label(category, key, stat_dict, company_name, date):
 
 def make_label(samples):
     # according to keys
+
+    company_names_dict = {}
+    with open('data/company_names.txt', 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            name, short_name = line.strip().split(":")
+            company_names_dict[short_name] = name
+
     for sample in samples:
         keys = sample['task_key']
         company_name = sample['Company_name']
@@ -124,5 +139,5 @@ def make_label(samples):
 
         
         for key in keys:
-            template = make_key_label(sample['category'], key, stat_dict, company_name, date)
+            template = make_key_label(sample['category'], key, stat_dict, company_name, date, company_names_dict)
             sample['prompt'] += template
