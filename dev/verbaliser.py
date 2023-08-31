@@ -33,13 +33,19 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
     # basic info
     elif category == 1:
         date = int(date[0])
-        if key == '法定代表人是否相同':
+        if key == "控股股东是否发生变更":
+            if stat_dict[key] == "相同":
+                template = f"{company_name}在{date}的控股股东没有变更"
+            elif stat_dict[key] == "不同":
+                template = f"{company_name}在{date}的控股股东发生了变更"
+                
+        elif key == '法定代表人是否相同':
             ret = stat_dict[key].split('|')
             if ret[0] == '相同':
                 template = f"{company_name}在{date}与{date+1}的法定代表人是相同，法定代表人均是{ret[1]}。"
             elif ret[0] == '不相同':
                 template = f"{company_name}在{date}与{date+1}的法定代表人是不相同的。在{date}的法定代表人是{ret[1]}，在{date+1}的法定代表人是{ret[2]}。"
-        elif key in ['职工总数', '技术人员数', '博士及以上', '硕士人数', '研发人员数']:
+        elif key in ['职工总数', '技术人员数', '博士及以上', '硕士人数', '研发人员数', '销售人员数']:
             template = f"{company_name}在{date}的{key}是{stat_dict[key]}人。"
         else:
             template = f"{company_name}在{date}的{key}是{stat_dict[key]}。"
@@ -88,7 +94,7 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
     # finacial keys
     elif category == 3:
         date = int(date[0])
-        if '和' in key and key != '联营企业和合营企业的投资收益':
+        if '和' in key and key not in ['联营企业和合营企业的投资收益', '负债和所有者权益总计']:
             key1, key2 = key.split('和')[0], key.split('和')[1]
             template = f"{company_name}在{date}年的{key1}是{stat_dict[key1]}元，{key2}是{stat_dict[key2]}元。"
         else:

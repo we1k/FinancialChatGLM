@@ -47,7 +47,7 @@ def classify_questions(samples):
 
         task_key_set = set()
         for key in samples[i]['task_key']:
-            if key in ["负债和所有者权益", "联营企业和合营企业投资收益"]:
+            if key in ["负债和所有者权益总计", "联营企业和合营企业投资收益"]:
                 task_key_set.add(key)
             else:
                 for item in key.split("和"):
