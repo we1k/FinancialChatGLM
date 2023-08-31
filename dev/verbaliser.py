@@ -33,10 +33,7 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
     # basic info
     elif category == 1:
         date = int(date[0])
-        if key == '法定代表人是什么':
-            template = f"{company_name}在{date}的法定代表人是{stat_dict[key]}。"
-            
-        elif key == '法定代表人是否相同':
+        if key == '法定代表人是否相同':
             ret = stat_dict[key].split('|')
             if ret[0] == '相同':
                 template = f"{company_name}在{date}与{date+1}的法定代表人是相同，法定代表人均是{ret[1]}。"

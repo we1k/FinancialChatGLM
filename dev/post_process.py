@@ -11,7 +11,7 @@ def main():
         for line, answer in zip(f1.readlines(),f2.readlines()):
             result = json.loads(line)
             dataset = json.loads(answer)
-            if dataset['category'] in [1, 2, 3] and dataset['prompt'] != '':
+            if dataset['category'] in [1, 2, 3, 5] and dataset['prompt'] != '':
                 result['answer'] = dataset['prompt']
                 
             results.append(result)

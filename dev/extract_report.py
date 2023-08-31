@@ -61,7 +61,7 @@ def extract_report(path, output_dir):
         for line in lines:
             line = re.sub(r'<Page:(\d+)>', r'\1', line)
             line = ast.literal_eval(line)
-            if line['type'] == 'text' and clean_line(line['inside'], title): continue
+            if line['type'] == "页脚" or line['type'] == "页眉" or (line['type'] == 'text' and clean_line(line['inside'], title)): continue
             new_lines.append(line)
 
     tables = []

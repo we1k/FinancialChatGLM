@@ -10,7 +10,9 @@ import jieba
 from fuzzywuzzy import process
 from transformers import T5Config, T5Tokenizer, T5ForConditionalGeneration
 
-from constant import CANDIDATE_KEY, RATIO_KEY, BASIC_KEY, FINANCIAL_KEY, ANALYSIS_KEY, VAGUE_MAPPING, KEY_REMAPPING
+from constant import RATIO_KEY, BASIC_KEY, FINANCIAL_KEY, ANALYSIS_KEY, VAGUE_MAPPING, KEY_REMAPPING
+
+from sql_util import parse_sql_task
 
 def has_digit(input_str):
     pattern = r'\d'  # 正则表达式匹配数字的模式
@@ -22,91 +24,53 @@ def has_keys(str, keys):
             return True
     return False
 
-
 special_questions = []
 unrecog_questions = []
 
-
 def verbaliser(_str):
-    _str = _str.replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用').replace('学历', '').replace('以及', '和')
+    _str = _str.replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用').replace('学历', '').replace('以及', '和').replace('控股股东、实际控制人诚信状况', '控股股东、实控人诚信状况')
     _str = re.sub(r'(\d+年)(法定代表人)(对比|与)(\d+年)', r'\1与\4\2', _str)
     
     for k, v in VAGUE_MAPPING.items():
         for x in v:
             _str = _str.replace(x, k)
     return _str
-    
-class SMP_Dataset(Dataset):
-    def __init__(self, samples, tokenizer, max_length) -> None:
-        self.questions = [verbaliser(sample["question"]) for sample in samples]
-        self.samples = [f"从输入中找出的金融指标名称。\n输入：“{input}”" for input in self.questions]
-        self.tokenizer = tokenizer
-        self.input_ids = tokenizer(self.samples, max_length=max_length, padding=True, truncation=True, return_tensors='pt')['input_ids']
-    
-    def __getitem__(self, index):
-        return self.input_ids[index]
-    
-    def __len__(self):
-        return len(self.samples)
         
 def classify_questions(samples):
-    model_path = "model/smp_question_clf/checkpoint-5000"
-    #Load pretrained model and tokenizer
-    config = T5Config.from_pretrained(model_path)
-    tokenizer = T5Tokenizer.from_pretrained(model_path)
-    model = T5ForConditionalGeneration.from_pretrained(model_path,config=config).cuda()
-    model.resize_token_embeddings(len(tokenizer))
-    model.eval()
-    
-    test_dataset = SMP_Dataset(samples, tokenizer, max_length=64)
-    test_dataloader = DataLoader(test_dataset,batch_size=2048,shuffle=False)
-    
-    ret = []
-    for batch in test_dataloader:
-        batch = batch.cuda()
-        
-        logits = model.generate(
-            input_ids=batch,
-            max_length=20, 
-            early_stopping=True,
-        )
+    ## 使用正则分类
+    sql_task_samples = []
+    for i in range(len(samples)):
+        if len(samples[i]['DATE']) == 0:
+            samples[i]['task_key'] = ['特殊问题']
 
-        logits=logits[:,1:]
-        labels = tokenizer.batch_decode(logits, skip_special_tokens=True)
-        ret += [[process.extractOne(word, CANDIDATE_KEY)[0] for word in label.split('和')\
-            if process.extractOne(word, CANDIDATE_KEY)[1] > 65] \
-            if '联营企业和合营企业投资收益' not in label \
-            else [label] \
-            for label in labels]
-        
-    for i, task_keys in enumerate(ret):
-        if samples[i]['Company_name'] == '':
-            task_keys = ['特殊问题']
+        re_classify_question(samples[i])
 
         task_key_set = set()
-        for key in task_keys:
-            if key == "联营企业和合营企业投资收益":
+        for key in samples[i]['task_key']:
+            if key in ["负债和所有者权益", "联营企业和合营企业投资收益"]:
                 task_key_set.add(key)
             else:
                 for item in key.split("和"):
                     task_key_set.add(item)
-        task_keys = list(task_key_set)
-        samples[i]['task_key'] = task_keys
+        samples[i]['task_key'] = list(task_key_set)
+        samples[i]['task_key'] = samples[i]['task_key']
         
-        # didn't match a task key
-        if len(task_keys) == 0:
-            re_classify_question(samples[i])
+        if len(samples[i]['task_key']) == 0:
             print(samples[i])
             continue
-            
-        if task_keys[0] in BASIC_KEY:
+
+        if samples[i]['task_key'][0] in BASIC_KEY:
             samples[i]['category'] = 1
-        elif task_keys[0] in RATIO_KEY:
+        elif samples[i]['task_key'][0] in RATIO_KEY:
             samples[i]['category'] = 2
-        elif task_keys[0] in FINANCIAL_KEY:
+        elif samples[i]['task_key'][0] in FINANCIAL_KEY:
             samples[i]['category'] = 3
-        elif task_keys[0] in ANALYSIS_KEY:
+        elif samples[i]['task_key'][0] in ANALYSIS_KEY:
             samples[i]['category'] = 4
+        elif samples[i]['task_key'][0] == 'sql task':
+            samples[i]['category'] = 5
+            sql_task_samples.append(samples[i])
+
         else:
             samples[i]['category'] = 0
     
@@ -115,9 +79,11 @@ def classify_questions(samples):
             if key in KEY_REMAPPING:
                 samples[i]['task_key'][j] = KEY_REMAPPING[key]
 
+    ### special case for : sql tasks
+    parse_sql_task(sql_task_samples)
+
 def re_classify_question(sample):
     question = verbaliser(sample['question'])
-    # print(question)
     if '法定代表人' in question and '相同' in question:
         question = question + '|法定代表人是否相同'
     
@@ -127,6 +93,11 @@ def re_classify_question(sample):
         special_questions.append(sample)
         sample['task_key'] = '特殊问题'
                 
+     # sql key
+    elif sample['Company_name'] == "":
+        sample['category'] = 5
+        sample['task_key'] = "sql task"
+        
     elif has_keys(question, BASIC_KEY):
         sample['category'] = 1
         for key in BASIC_KEY:
@@ -141,27 +112,36 @@ def re_classify_question(sample):
                 break
         sample['task_key'] = key
     
+    # 多个financial key
     elif has_keys(question, FINANCIAL_KEY):
+        sample['task_key'] = []
         sample['category'] = 3
         for key in FINANCIAL_KEY:
             if key in question:
-                break
-        sample['task_key'] = key
-    
+                if len(sample['task_key']) == 0:
+                    sample['task_key'].append(key)
+                else:
+                    for item in sample['task_key']:
+                        if key not in item:
+                            sample['task_key'].append(key)
+
     elif has_keys(question, ANALYSIS_KEY):
         sample['category'] = 4
         for key in ANALYSIS_KEY:
             if key in question:
                 break
         sample['task_key'] = key
-    
+
     else:
+        # 使用fuzzywuzzy提取关键词
+
+
         sample['category'] = 0
         sample['task_key'] = '特殊问题'
         unrecog_questions.append(sample)
 
-    sample['task_key'] = [sample['task_key']]
-    
+    if not isinstance(sample['task_key'], list):
+        sample['task_key'] = [sample['task_key']]
 
 def main():
     samples = []

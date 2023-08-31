@@ -82,7 +82,7 @@ location_pattern = re.compile(r'(上海|北京|南京|无锡|苏州|杭州|深�
 keyword_pattern = re.compile(r'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润)')
 
 def parse_sql_task(samples):
-    model_path = "/tcdata/chatglm2-6b-hug"
+    model_path = "./tcdata/chatglm2-6b-hug"
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_path, trust_remote_code=True).half().cuda()
 
@@ -109,7 +109,12 @@ def parse_sql_task(samples):
                 num = zh2num(num)
             if num not in ["2019", "2020", "2021"]:
                 sample["rank"] = flag * int(num)
-            
+        
+        # intersect 字段
+        sample["intersect"] = False
+        if "均位列" in question:
+            sample["intersect"] = True
+
         # range 字段
         sample["range"] = True
         if "第" in question or sample["rank"] in [-1, 1]:
@@ -133,6 +138,11 @@ def parse_sql_task(samples):
         # 加上fuzzywuzzy
         if keyword[0] == "负债总金额":
             keyword[0] = "负债合计"
+        if keyword[0] == "流动资产":
+            keyword[0] = "流动资产合计"
+        if keyword[0] == "非流动资产":
+            keyword[0] = "非流动资产合计"
+
         sample['task_key'] = [similarity_match(keyword, FINANCIAL_KEY)]
 
 
