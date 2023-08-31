@@ -10,7 +10,7 @@ path = './data/tables/'
 
 def create_debt(foldername):
     try:
-        empty_debt = [0] * len(DEBT_KEY)
+        empty_debt = [0] * (3 + len(DEBT_KEY))
         for filename in os.listdir(path+foldername):
             if re.match("基本信息表.json", filename):
                 with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
@@ -34,7 +34,7 @@ def create_debt(foldername):
                         continue
                     for row in sheet:
                         table.append([row[index1], row[index2]])
-                    for i in range(3, len(DEBT_KEY)):
+                    for i in range(len(DEBT_KEY)):
                         minlength = 99
                         for item in table:
                             if DEBT_KEY[i] in item[0]:
@@ -56,7 +56,7 @@ def create_debt(foldername):
 
 def create_profit(foldername):
     try:
-        empty_profit = [0] * len(PROFIT_KEY)
+        empty_profit = [0] * (3 + len(PROFIT_KEY))
         for filename in os.listdir(path+foldername):
             if re.match("基本信息表.json", filename):
                 with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
@@ -80,7 +80,7 @@ def create_profit(foldername):
                         continue
                     for row in sheet:
                         table.append([row[index1], row[index2]])
-                    for i in range(3, len(PROFIT_KEY)):
+                    for i in range(len(PROFIT_KEY)):
                         minlength = 99
                         for item in table:
                             if PROFIT_KEY[i] in item[0] or (KEY_REMAPPING.get(PROFIT_KEY[i], "None") in item[0]):
@@ -98,7 +98,7 @@ def create_profit(foldername):
 
 def create_cash(foldername):
     try:
-        empty_cash = [0] * len(CASH_KEY)
+        empty_cash = [0] * (3 + len(CASH_KEY))
         for filename in os.listdir(path+foldername):
             if re.match("基本信息表.json", filename):
                 with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
@@ -122,7 +122,7 @@ def create_cash(foldername):
                         continue
                     for row in sheet:
                         table.append([row[index1], row[index2]])
-                    for i in range(3, len(CASH_KEY)):
+                    for i in range(len(CASH_KEY)):
                         minlength = 99
                         for item in table:
                             if CASH_KEY[i] in item[0] or (KEY_REMAPPING.get(CASH_KEY[i], "None") in item[0]):
@@ -147,101 +147,55 @@ def create_db():
     cursor = conn.cursor()
 
     # 创建表
-    cursor.execute('''CREATE TABLE IF NOT EXISTS debt
-                    (公司名称 VARCHAR(10),
-                    年份 INT,
-                    注册地址 TEXT,
-                    负债合计 DECIMAL(20, 2),
-                    应付职工薪酬 DECIMAL(20, 2),
-                    资产总计 DECIMAL(20, 2),
-                    流动资产合计 DECIMAL(20, 2),
-                    非流动资产合计 DECIMAL(20, 2),
-                    应收款项融资 DECIMAL(20, 2),
-                    货币资金 DECIMAL(20, 2),
-                    衍生金融资产 DECIMAL(20, 2),
-                    其他非流动金融资产 DECIMAL(20, 2),
-                    固定资产 DECIMAL(20, 2),
-                    无形资产 DECIMAL(20, 2),
-                    存货 DECIMAL(20, 2),
-                    股本 DECIMAL(20, 2),
-                    交易性金融资产 DECIMAL(20, 2),
-                    应收账款 DECIMAL(20, 2),
-                    预付款项 DECIMAL(20, 2),
-                    应付账款 DECIMAL(20, 2),
-                    其他流动资产 DECIMAL(20, 2),
-                    其他非流动资产 DECIMAL(20, 2),
-                    短期借款 DECIMAL(20, 2),
-                    在建工程 DECIMAL(20, 2),
-                    资本公积 DECIMAL(20, 2),
-                    盈余公积 DECIMAL(20, 2),
-                    未分配利润 DECIMAL(20, 2),
-                    递延所得税负债 DECIMAL(20, 2),
-                    PRIMARY KEY (公司名称, 年份))''')
-    
-    cursor.execute('''CREATE TABLE IF NOT EXISTS profit
-                    (公司名称 VARCHAR(10),
-                    年份 INT,
-                    注册地址 TEXT,
-                    营业利润 DECIMAL(20, 2),
-                    营业成本 DECIMAL(20, 2),
-                    营业收入 DECIMAL(20, 2),
-                    营业外支出 DECIMAL(20, 2),
-                    营业外收入 DECIMAL(20, 2),
-                    利息支出 DECIMAL(20, 2),
-                    利息收入 DECIMAL(20, 2),
-                    投资收益 DECIMAL(20, 2),
-                    变动收益 DECIMAL(20, 2),
-                    研发费用 DECIMAL(20, 2),
-                    财务费用 DECIMAL(20, 2),
-                    销售费用 DECIMAL(20, 2),
-                    管理费用 DECIMAL(20, 2),
-                    利润总额 DECIMAL(20, 2),
-                    净利润 DECIMAL(20, 2),
-                    所得税费用 DECIMAL(20, 2),
-                    综合收益总额 DECIMAL(20, 2),
-                    税金及附加 DECIMAL(20, 2),
-                    联营企业和合营企业投资收益 DECIMAL(20, 2),
-                    公允价值变动收益 DECIMAL(20, 2),
-                    信用减值损失 DECIMAL(20, 2),
-                    资产减值损失 DECIMAL(20, 2),
-                    资产处置收益 DECIMAL(20, 2),
-                    持续经营净利润 DECIMAL(20, 2),
-                    营业总收入 DECIMAL(20, 2),
-                    营业总成本 DECIMAL(20, 2),
-                    PRIMARY KEY (公司名称, 年份))''')
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS cash
+    key_list = [f"{key} DECIMAL(20, 2)" for key in DEBT_KEY]
+    create_command = ",\n".join(key_list)
+    create_command = f'''CREATE TABLE IF NOT EXISTS debt
                 (公司名称 VARCHAR(10),
                 年份 INT,
                 注册地址 TEXT,
-                收回投资收到现金 DECIMAL(20, 2),
-                现金及现金等价物余额 DECIMAL(20, 2),
-                投资支付 DECIMAL(20, 2),
-                经营活动现金流入 DECIMAL(20, 2),
-                经营活动现金流出 DECIMAL(20, 2),
-                投资活动现金流入 DECIMAL(20, 2),
-                投资活动现金流出 DECIMAL(20, 2),
-                筹资活动现金流出 DECIMAL(20, 2),
-                筹资活动现金流入 DECIMAL(20, 2),
-                现金及现金等价物净增加额 DECIMAL(20, 2),
-                PRIMARY KEY (公司名称, 年份))''')
+                {create_command},
+                PRIMARY KEY (公司名称, 年份))
+                '''
+    cursor.execute(create_command)
+    
+    key_list = [f"{key} DECIMAL(20, 2)" for key in PROFIT_KEY]
+    create_command = ",\n".join(key_list)
+    create_command = f'''CREATE TABLE IF NOT EXISTS profit
+                (公司名称 VARCHAR(10),
+                年份 INT,
+                注册地址 TEXT,
+                {create_command},
+                PRIMARY KEY (公司名称, 年份))
+                '''
+    cursor.execute(create_command)
+
+    key_list = [f"{key} DECIMAL(20, 2)" for key in CASH_KEY]
+    create_command = ",\n".join(key_list)
+    create_command = f'''CREATE TABLE IF NOT EXISTS cash
+                (公司名称 VARCHAR(10),
+                年份 INT,
+                注册地址 TEXT,
+                {create_command},
+                PRIMARY KEY (公司名称, 年份))
+                '''
+    cursor.execute(create_command)
     
     # for foldername in os.listdir(path):
     #     command = create_profit(foldername)
 
-    with open('/tcdata/B-list-pdf-name.txt','r',encoding='utf-8') as f:
+    with open('./tcdata/B-list-pdf-name.txt','r',encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             parts = line.split('__')
             foldername = parts[3] + '__' + parts[4]
             #print(parts[3] + '__' + parts[4])
             command = create_debt(foldername)
-            #print(command)
+            print(command)
             if len(command) > 0:
                 cursor.execute(command)
             
             command = create_profit(foldername)
-            #print(command)
+            print(command)
             if len(command) > 0:
                 cursor.execute(command)
             
@@ -252,10 +206,10 @@ def create_db():
             
             conn.commit()
     # test on db
-    # cursor.execute("SELECT 公司名称, 年份, 注册地址 FROM debt WHERE 注册地址 LIKE '%成都%'")
-    # rows = cursor.fetchall()
+    cursor.execute("SELECT 公司名称, 年份, 注册地址 FROM debt")
+    rows = cursor.fetchall()
     # for row in rows:
-    #     print(row)
+        # print(row)
 
 
 if __name__ == "__main__":
