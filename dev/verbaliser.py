@@ -24,7 +24,7 @@ ratio_key_dict = {
 
 def make_key_label(category, key, stat_dict, company_name, date):
     if stat_dict[key] == f"没有查询到对应的信息,无法回答":
-        return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息,无法回答。"
+        return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息."
     template = f"NOT implement"
     # special question
     if category == 0:
@@ -101,7 +101,8 @@ def make_key_label(category, key, stat_dict, company_name, date):
             template = f"{company_name}在{date}年的{key}是{stat_dict[key]}元。"
     
     elif category == 4:
-        pass
+        related_info = [f"相关信息{i} : {stat_dict[key][i]}" for i in range(len(stat_dict[key]))]
+        template = "\n\n".join(related_info)
 
     # SQL query
     elif category == 5:

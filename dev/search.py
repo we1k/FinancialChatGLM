@@ -5,6 +5,7 @@ import shutil
 import pandas as pd
 import sqlite3
 from constant import DEBT_KEY, PROFIT_KEY, CASH_KEY 
+from embeddings import find_top5
 
 from verbaliser import make_label
 
@@ -110,12 +111,12 @@ def search_financial_key(key, stat_dict, company_name, date):
     elif key == '每股净资产':
         stat_dict['总股本'] = double(search_table(company_name, date, '股本'))
         stat_dict['净资产'] = Float(search_json(company_name, date, '净资产'))
-        stat_dict['每股净资产'] = round(stat_dict['净资产'] / stat_dict['总股本'], 4)
+        stat_dict['每股净资产'] = '%.4f' % (stat_dict['净资产'] / stat_dict['总股本'])
         
     elif key == '每股经营现金流量':
         stat_dict['总股本'] = double(search_table(company_name, date, '股本'))
         stat_dict['现金流量净额'] = Float(search_json(company_name, date, '现金流量净额'))
-        stat_dict['每股经营现金流量'] = round(stat_dict['现金流量净额'] / stat_dict['总股本'], 3)
+        stat_dict['每股经营现金流量'] = '%.3f' % (stat_dict['现金流量净额'] / stat_dict['总股本'])
         
     elif key == '负债合计':
         stat_dict[key] = search_table(company_name, date, key)
@@ -370,9 +371,9 @@ class Parser:
                 ret = 0
             
             if key in ['企业研发经费与利润比值', '企业研发经费与营业收入比值', '流动比率', '速动比率', '企业研发经费占费用比例', '企业硕士及以上人员占职工人数比例', '研发人员占职工人数比例']:
-                ret = str(round(ret, 2))
+                ret = '%.2f' % (ret)
             else:
-                ret = str(round(ret * 100, 2)) + '%'
+                ret = '%.2f' % (ret * 100) + '%'
 
         except Exception as e:
             if 'dir' not in e.__repr__():
@@ -388,7 +389,26 @@ class Parser:
         pass
 
     def parse_analysis(self, item):
-        pass
+        key = item['task_key'][0]
+        item['stat_dict'] = {}
+        company_name = item['Company_name']
+        date = item['DATE'][0]
+        full_name = ""
+        with open('data/company_names.txt', 'r', encoding='utf-8') as f:
+            for line in f.readlines():
+                name, short_name = line.strip().split(":")
+                if short_name == company_name:
+                    full_name = name
+                    break
+
+        question = item['question'].replace(date+"年", "").replace(full_name, "").replace(company_name, "")
+        # 年份一起替换了 替换公司名为公司(full name and short name)
+        # 
+        folder_path = os.path.join(f"./data/tables/{company_name}__{date}年")
+        try:
+            item['stat_dict'][key] = find_top5(folder_path, question)
+        except Exception as e:
+            item['stat_dict'][key] = "没有查询到对应的信息,无法回答"
 
     def parse_sql(self, item):
         """
@@ -492,7 +512,6 @@ class Parser:
     def parse_question(self, item):
         parse_fn = self.parse_fn_dict[str(item['category'])]
         parse_fn(item)
-
 
 
 def parse_question(path='./data/parse_question.json'):

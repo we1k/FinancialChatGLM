@@ -1,5 +1,14 @@
 #!/bin/bash
-CUDA_VISIBLE_DEVICES=2,3 python ./src/train_bash.py \
+CUDA_VISIBLE_DEVICES=2,3
+gpu_num=$(echo $CUDA_VISIBLE_DEVICES | awk -F ',' '{print NF}')
+echo $gpu_num $CUDA_VISIBLE_DEVICES
+
+
+CUDA_VISIBLE_DEVICES=2,3 torchrun \
+    --nnodes 1 \
+    --nproc_per_node $gpu_num \
+    --master_port 29500 \
+     ./src/train_bash.py \
     --stage sft \
     --model_name_or_path ./tcdata/chatglm2-6b-hug \
     --do_predict \
@@ -7,9 +16,9 @@ CUDA_VISIBLE_DEVICES=2,3 python ./src/train_bash.py \
     --dataset_dir ./data \
     --output_dir output \
     --overwrite_cache \
-    --max_source_length 512 \
-    --max_target_length 256 \
+    --max_source_length 5120 \
+    --max_target_length 512 \
     --overwrite_cache true \
-    --per_device_eval_batch_size 16 \
+    --per_device_eval_batch_size 1 \
     --predict_with_generate \
     --remove_unused_columns false

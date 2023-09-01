@@ -26,7 +26,11 @@ class TemplateManager:
             # analysis_keys
             4 : PromptTemplate(
                 input_variables=["prompt", "question"],
-                template="根据已知信息中简洁和专业的来回答问题，\n问题是：{question}\n已知信息：{prompt}\n答："
+                template = "【任务说明和要求】 \n" \
+                        "本题是阅读理解题，读取并理解【背景知识】。 \n"
+                        "根据背景知识，简洁和专业的来回答问题，\n"
+                        "【背景知识】：{prompt}\n"
+                        "【问题】：{question}\n答："
             ),
             # sql_keys
             5 : PromptTemplate(

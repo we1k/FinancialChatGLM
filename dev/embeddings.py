@@ -79,10 +79,12 @@ def get_vector(paths):
     save_path = paths[1]
     if not os.path.exists(save_path):
         os.mkdir(save_path)
+
     vector_path = os.path.join(save_path, 'vector.npy')
-    sentence_path = os.path.join(save_path + 'sentence.json')
+    sentence_path = os.path.join(save_path, 'sentence.json')
     
     if os.path.exists(sentence_path) and os.path.exists(vector_path):
+        # print(f'save_path exist: {save_path}')
         return
     
     text = get_text(file_path)
@@ -96,7 +98,6 @@ def get_vector(paths):
     np.save(vector_path, embeddings)
     with open(sentence_path, 'w', encoding='utf-8') as f:
         json.dump(sentences, f, ensure_ascii=False)
-    print(paths)
 
 def find_top5(folderpath, question):
     vector_path = os.path.join(folderpath, 'vector.npy')
@@ -141,9 +142,9 @@ def find_top5(folderpath, question):
 
 if __name__ == '__main__':
     tablepath = './data/tables/'
-    txtpath = './tcdata/alltxt/'
+    txtpath = '/tcdata/alltxt/'
     dir_list = []
-    with open('./tcdata/B-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('/tcdata/B-list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             dir_list.append(line.replace("\n", "").replace(".pdf", '.txt'))
 
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     amount = 0
     txt_list = [[os.path.join(txtpath, x), os.path.join(tablepath, x.split('__')[3] + '__' + x.split('__')[4])] for x in dir_list if re.match('20.*txt', x)]
     #print(txt_list[1])
-    with multiprocessing.Pool(processes=16) as pool:
+    with multiprocessing.Pool(processes=4) as pool:
         pool.map(get_vector, txt_list)
     
     
