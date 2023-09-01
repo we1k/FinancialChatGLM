@@ -22,7 +22,7 @@ ratio_key_dict = {
 }
 
 
-def make_key_label(category, key, stat_dict, company_name, date, company_names_dict):
+def make_key_label(category, key, stat_dict, company_name, date):
     if stat_dict[key] == f"没有查询到对应的信息,无法回答":
         return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息,无法回答。"
     template = f"NOT implement"
@@ -111,7 +111,7 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
         else:
             template = f"在{date}年的满足{key}题目要求的上市公司有:"
             for ans in stat_dict[key]:
-                template += f"{company_names_dict[ans[0]]}，简称{ans[0]}。"
+                template += f"{ans[0]}。"
                 if len(ans) > 1:
                     template += f"金额是{str(ans[1]) + '元'}。"
                     
@@ -125,12 +125,6 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
 def make_label(samples):
     # according to keys
 
-    company_names_dict = {}
-    with open('data/company_names.txt', 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            name, short_name = line.strip().split(":")
-            company_names_dict[short_name] = name
-
     for sample in samples:
         keys = sample['task_key']
         company_name = sample['Company_name']
@@ -142,5 +136,5 @@ def make_label(samples):
 
         
         for key in keys:
-            template = make_key_label(sample['category'], key, stat_dict, company_name, date, company_names_dict)
+            template = make_key_label(sample['category'], key, stat_dict, company_name, date)
             sample['prompt'] += template

@@ -64,16 +64,12 @@ def get_entities(data):
     return ret
 
 def main():
-    # path = '/tcdata/B-list-question.json'
-    path = './tcdata/b_test.json'
-    # path = './data/parse_question.json'
+    path = '/tcdata/B-list-question.json'
     samples = []
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             line = json.loads(line)
-            if 'answer' in line:
-                del line['answer']
             samples.append(line)
 
     company_names_dict = {}

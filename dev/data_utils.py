@@ -80,3 +80,7 @@ def get_company_name():
         name_lists = list(set(name_lists))
     with open('data/company_names.txt', 'w', encoding='utf-8') as f:
         f.write("\n".join(name_lists))
+
+
+if __name__ == "__main__":
+    extract_basic_info()
