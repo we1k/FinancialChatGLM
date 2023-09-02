@@ -6,7 +6,7 @@ from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 root_directory = 'data/'
-data_directory = 'data/lines_txt'
+data_directory = './tcdata/alltxt'
 
 def read_dict_from_file(file_name):
     file_path = os.path.join(data_directory, file_name)
@@ -83,7 +83,7 @@ class ReportSplitter:
             txt_data = '\n'.join([str(d) for d in line_entries[begin_pos:end_pos]])
             # print(section_file_name, sec_num, begin_pos, end_pos)
             section_file_path = os.path.join(dir_path, section_file_name)
-            if not os.path.exists(section_file_path):
+            if not os.path.exists(section_file_path) and ("公司简介和主要财务指标" in section_file_path or "重要事项" in section_file_path):
                 with open(section_file_path, 'w', encoding='utf-8') as file:
                     file.write(txt_data)
 
@@ -117,12 +117,6 @@ class ReportSplitter:
 
 
 
-
-# file_name = '2021-04-29__江苏银行股份有限公司__600919__江苏银行__2020年__年度报告.txt'
-# splitter = ReportSplitter(file_name)
-# splitter.split_sections()
-
-
 file_names = os.listdir(data_directory)
 
 total_files_len = len(file_names) 
@@ -133,7 +127,7 @@ def process_file(file_name):
     splitter = ReportSplitter(file_name)
     splitter.split_sections()
 
-with ProcessPoolExecutor(max_workers=8) as executor:
+with ProcessPoolExecutor(max_workers=24) as executor:
     futures = [executor.submit(process_file, file_name) for file_name in file_names]
 
     for future in tqdm(as_completed(futures), total=total_files_len):

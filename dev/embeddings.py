@@ -6,7 +6,7 @@ import json
 import numpy as np
 import multiprocessing
 import os
-CHUNK_SIZE = 100
+CHUNK_SIZE = 500
 
 ##merge
 def get_text(file_path):
@@ -48,13 +48,13 @@ def split_text_short(text: str) -> List[str]:
     text = re.sub(r'([;；!?。！？\?])([^”’])', r"\1\n\2", text)  # 单字符断句符
     # text = re.sub(r'(\.{6})([^"’”」』])', r"\1\n\2", text)  # 英文省略号
     text = re.sub(r'(\…{2})([^"’”」』])', r"\1\n\2", text)  # 中文省略号
-    text = re.sub(r'([;；!?。！？\?]["’”」』]{0,2})([^;；!?，。！？\?])', r'\1\n\2', text) # 分号
+    # text = re.sub(r'([;；!?。！？\?]["’”」』]{0,2})([^;；!?，。！？\?])', r'\1\n\2', text) # 分号
     # 如果双引号前有终止符，那么双引号才是句子的终点，把分句符\n放到双引号后，注意前面的几句都小心保留了双引号
     text = text.rstrip("\n")  # 段尾如果有多余的\n就去掉它
     ls = [i for i in text.split("\n") if i]
     for ele in ls:
         if len(ele) > CHUNK_SIZE:
-            ele1 = re.sub(r'([,，.]["’”」』]{0,2})([^,，.])', r'\1\n\2', ele)
+            ele1 = re.sub(r'([，]["’”」』]{0,2})([^，])', r'\1\n\2', ele)
             ele1_ls = ele1.split("\n")
             for ele_ele1 in ele1_ls:
                 if len(ele_ele1) > CHUNK_SIZE:
@@ -99,10 +99,21 @@ def get_vector(paths):
     with open(sentence_path, 'w', encoding='utf-8') as f:
         json.dump(sentences, f, ensure_ascii=False)
 
-def find_top5(folderpath, question):
+def find_top5(folderpath, question):#filepath是txt文件的路径，包含txt文件名，folderpath是table/公司名_年份
+    txt_path = '/tcdata/alltxt/'
+    tmp = folderpath.split('/')[-1]
+    for x in os.listdir(txt_path):
+        if tmp in x:
+            filepath = os.path.join(txt_path, x)
+            break
     vector_path = os.path.join(folderpath, 'vector.npy')
     sentence_path = os.path.join(folderpath, 'sentence.json')
     #loadfile
+    if os.path.exists(sentence_path) and os.path.exists(vector_path):
+        pass
+    else:
+        get_vector([filepath,folderpath])
+    
     with open(sentence_path,'r',encoding='utf-8') as fd:
         read_sentense = json.load(fd)
     read_vector = np.load(vector_path)
@@ -144,7 +155,7 @@ if __name__ == '__main__':
     tablepath = './data/tables/'
     txtpath = '/tcdata/alltxt/'
     dir_list = []
-    with open('/tcdata/B-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('/tcdata/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             dir_list.append(line.replace("\n", "").replace(".pdf", '.txt'))
 

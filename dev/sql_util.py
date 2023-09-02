@@ -9,7 +9,7 @@ from fuzzywuzzy import process, fuzz
 
 from transformers import AutoModel, AutoTokenizer
 
-from constant import FINANCIAL_KEY
+from constant import FINANCIAL_KEY, CITIES
 
 def zh2num(num: str):
     mapping = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, \
@@ -76,7 +76,13 @@ def similarity_match(set, candidate_key):
 # pattern2 = re.compile(r'哪家上市公司，在(.+?)注册，(\d+年)(.+?)最高？金额为？')
 
 # 编译地点名正则  
-location_pattern = re.compile(r'(上海|北京|南京|无锡|苏州|杭州|深圳|宁波|西安|天津|青岛|武汉|重庆)')
+# 创建包含所有城市名称的正则表达式模式
+
+cities = list(set(CITIES))
+
+# 将城市名称列表转换为正则表达式模式，用于匹配
+city_pattern = r"|".join(re.escape(city) for city in cities)
+location_pattern = re.compile(fr'({city_pattern})')
 
 # 编译关键词正则
 keyword_pattern = re.compile(r'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润)')

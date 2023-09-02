@@ -403,10 +403,19 @@ class Parser:
 
         question = item['question'].replace(date+"年", "").replace(full_name, "").replace(company_name, "")
         # 年份一起替换了 替换公司名为公司(full name and short name)
-        # 
+        #
         folder_path = os.path.join(f"./data/tables/{company_name}__{date}年")
+        # 先去找 analysis.json if task_key in analysis key
         try:
-            item['stat_dict'][key] = find_top5(folder_path, question)
+            if os.path.exists(tmp:=os.path.join(folder_path, 'analysis.json')):
+                with open(tmp, 'r', encoding='utf-8') as f:
+                    analysis_dict = json.load(f)
+                    for dict_key in analysis_dict.keys():
+                        if key in dict_key or key in dict_key.replace('的', ''):
+                            item['stat_dict'][key] = analysis_dict[dict_key]
+                pass
+            else:
+                    item['stat_dict'][key] = find_top5(folder_path, question)
         except Exception as e:
             item['stat_dict'][key] = "没有查询到对应的信息,无法回答"
 

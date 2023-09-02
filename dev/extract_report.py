@@ -54,6 +54,14 @@ def table2DF(table):
     return df
 
 def extract_report(path, output_dir):
+    # output to a directory
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    files = os.listdir(output_dir)
+    # 避免重复提取
+    if any(file.endswith('.csv') for file in files):
+        return
+    
     title = get_title(path)
     new_lines = []
     with open(path, 'r', encoding='utf-8') as f:
@@ -108,9 +116,6 @@ def extract_report(path, output_dir):
                         flag = True
                         tolerance = -1
                     
-    # output to a directory
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
 
     name = ''
     table_num = 0
@@ -124,41 +129,32 @@ def extract_report(path, output_dir):
             name = ''
 
 def process_file(file_path):
-    company_name = file_path.split('/')[2].split('__')[3]
-    year = file_path.split('/')[2].split('__')[4]
+    company_name = file_path.split('/')[-1].split('__')[3]
+    year = file_path.split('/')[-1].split('__')[4]
     output_dir = f'data/tables/{company_name}__{year}'
-    extract_report(file_path, output_dir)
+    try:
+        extract_report(file_path, output_dir)
+    except:
+        pass
 
 def main():
-    dir_path = 'data/lines_txt/'
+    dir_path = '/tcdata/alltxt'
+    # dir_path = 'data/lines_txt/'
     file_paths = []
-    for root, dirs, files in os.walk(dir_path):
-        for name in files:
-            file_paths.append(os.path.join(root, name))
+    test_name = []
+    with open('/tcdata/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            test_name.append(line.replace("\n", "").replace(".pdf", ".txt"))
+    for path in os.listdir(dir_path):
+        if path in test_name:
+            file_paths.append(os.path.join(dir_path, path))
     # num_processes = multiprocessing.cpu_count()
-    num_processes = 10
+    num_processes = 6
 
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(process_file, file_paths)
+    # 拆解基本信息
     extract_basic_info()
-
-def convert2csv(input_path, output_path):
-    new_lines = []
-    with open(input_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        for line in lines:
-            line = re.sub(r'<Page:(\d+)>', r'\1', line)
-            line = ast.literal_eval(line)
-            new_lines.append(line)
-
-    table = []
-    for line in new_lines:
-        if line['type'] == 'text': continue
-        table.append(line)
-
-    df = table2DF(table)
-    df.to_csv(output_path+'.csv')
-
 
 if __name__ == '__main__':
     main()
