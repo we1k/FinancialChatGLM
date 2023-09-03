@@ -22,7 +22,7 @@ ratio_key_dict = {
 }
 
 
-def make_key_label(category, key, stat_dict, company_name, date):
+def make_key_label(category, key, stat_dict, company_name, date, company_names_dict):
     if stat_dict[key] == f"没有查询到对应的信息,无法回答":
         return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息."
     template = f"NOT implement"
@@ -47,6 +47,26 @@ def make_key_label(category, key, stat_dict, company_name, date):
                 template = f"{company_name}在{date}与{date+1}的法定代表人是不相同的。在{date}的法定代表人是{ret[1]}，在{date+1}的法定代表人是{ret[2]}。"
         elif key in ['职工总数', '技术人员数', '博士及以上', '硕士人数', '研发人员数', '销售人员数']:
             template = f"{company_name}在{date}的{key}是{stat_dict[key]}人。"
+        elif key == "面临退市":
+            if stat_dict[key] == '适用':
+                template = f"{company_name}在{date}的{key}适用。公司面临退市的风险。"
+            elif stat_dict[key] == '不适用':
+                template = f"{company_name}在{date}的{key}情况不适用。公司报告期不存在面临终止上市的情况。"
+            elif stat_dict[key] == '未提及':
+                template = f"{company_name}在{date}的{key}情况没有提到相关内容"
+
+        elif key == "处罚及整改":
+            if stat_dict[key] == '适用':
+                template = f"{company_name}在{date}的{key}适用。公司有相关的处罚及整改"
+            elif stat_dict[key] == '不适用':
+                template = f"{company_name}在{date}的{key}情况不适用。公司报告期不存在处罚及整改情况。"
+
+        elif key == "破产重整相关":
+            if stat_dict[key] == '适用':
+                template = f"{company_name}在{date}的{key}适用。公司有相关的破产重整的风险"
+            elif stat_dict[key] == '不适用':
+                template = f"{company_name}在{date}的{key}情况不适用。公司报告期未发生破产重整相关事项。"
+
         else:
             template = f"{company_name}在{date}的{key}是{stat_dict[key]}。"
     
@@ -97,6 +117,8 @@ def make_key_label(category, key, stat_dict, company_name, date):
         if '和' in key and key not in ['联营企业和合营企业的投资收益', '负债和所有者权益总计']:
             key1, key2 = key.split('和')[0], key.split('和')[1]
             template = f"{company_name}在{date}年的{key1}是{stat_dict[key1]}元，{key2}是{stat_dict[key2]}元。"
+        elif key == "股本" or key == "实收资本":
+            template = f"{company_name}在{date}年的实收资本，股本是{stat_dict[key]}元。"
         else:
             template = f"{company_name}在{date}年的{key}是{stat_dict[key]}元。"
     
@@ -112,7 +134,7 @@ def make_key_label(category, key, stat_dict, company_name, date):
         else:
             template = f"在{date}年的满足{key}题目要求的上市公司有:"
             for ans in stat_dict[key]:
-                template += f"{ans[0]}。"
+                template += f"{company_names_dict[ans[0]]}，简称{ans[0]}。"
                 if len(ans) > 1:
                     template += f"金额是{str(ans[1]) + '元'}。"
                     
@@ -125,6 +147,11 @@ def make_key_label(category, key, stat_dict, company_name, date):
 
 def make_label(samples):
     # according to keys
+    company_names_dict = {}
+    with open('data/company_names.txt', 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            name, short_name = line.strip().split(":")
+            company_names_dict[short_name] = name
 
     for sample in samples:
         keys = sample['task_key']
@@ -137,5 +164,5 @@ def make_label(samples):
 
         
         for key in keys:
-            template = make_key_label(sample['category'], key, stat_dict, company_name, date)
+            template = make_key_label(sample['category'], key, stat_dict, company_name, date, company_names_dict)
             sample['prompt'] += template

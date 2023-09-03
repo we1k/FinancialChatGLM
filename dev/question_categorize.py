@@ -28,7 +28,7 @@ special_questions = []
 unrecog_questions = []
 
 def verbaliser(_str):
-    _str = _str.replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用').replace('学历', '').replace('以及', '和')
+    _str = _str.replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用').replace('学历', '').replace('以及', '和').replace('控股股东、实际控制人', '控股股东、实控人')
     _str = re.sub(r'(\d+年)(法定代表人)(对比|与)(\d+年)', r'\1与\4\2', _str)
     
     for k, v in VAGUE_MAPPING.items():

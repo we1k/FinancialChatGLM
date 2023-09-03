@@ -371,9 +371,9 @@ class Parser:
                 ret = 0
             
             if key in ['企业研发经费与利润比值', '企业研发经费与营业收入比值', '流动比率', '速动比率', '企业研发经费占费用比例', '企业硕士及以上人员占职工人数比例', '研发人员占职工人数比例']:
-                ret = '%.2f' % (ret)
+                ret = '%.2f' % (ret) + '或者是%.2f' % (ret * 100) + '%'
             else:
-                ret = '%.2f' % (ret * 100) + '%'
+                ret = '%.2f' % (ret * 100) + '%' + '或者是%.2f' % (ret)
 
         except Exception as e:
             if 'dir' not in e.__repr__():
@@ -413,7 +413,9 @@ class Parser:
                     for dict_key in analysis_dict.keys():
                         if key in dict_key or key in dict_key.replace('的', ''):
                             item['stat_dict'][key] = analysis_dict[dict_key]
-                pass
+                # 没有检索到对应的字段
+                if key not in item['stat_dict']:
+                    item['stat_dict'][key] = find_top5(folder_path, question)
             else:
                     item['stat_dict'][key] = find_top5(folder_path, question)
         except Exception as e:
@@ -543,8 +545,8 @@ def parse_question(path='./data/parse_question.json'):
         if question['prompt'] != '':
             datasets.append({
                 "question" : question['question'],
-                "prompt" : f"{question['prompt']}",
-                "target" : f"{question['prompt']}",
+                "prompt" : f"{question['prompt'][:5000]}",
+                "target" : f"{question['prompt'][:5000]}",
                 "category" : question['category'],
             })
         else:

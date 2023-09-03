@@ -6,7 +6,7 @@ import csv
 
 debtkey = ['公司名称', '年份', '注册地址', '负债合计', '应付职工薪酬', '资产总计', '流动资产合计', '非流动资产合计', '应收款项融资', '货币资金', 
             '衍生金融资产', '其他非流动金融资产',
-            '固定资产', '无形资产', '存货', '股本',
+            '固定资产', '无形资产', '存货', '实收资本', '股本',
             '交易性金融资产', '应收账款', '预付款项', '应付账款', 
             '其他流动资产', '其他非流动资产', '短期借款', '在建工程', '资本公积',
             '盈余公积', '未分配利润', '递延所得税负债']
@@ -214,7 +214,7 @@ def create_db():
     # for foldername in os.listdir(path):
     #     command = create_profit(foldername)
 
-    with open('/tcdata/B-list-pdf-name.txt','r',encoding='utf-8') as f:
+    with open('/tcdata/C-list-pdf-name.txt','r',encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             parts = line.split('__')
