@@ -59,8 +59,8 @@ def extract_report(path, output_dir):
         os.mkdir(output_dir)
     files = os.listdir(output_dir)
     # 避免重复提取
-    if any(file.endswith('.csv') for file in files):
-        return
+    # if any(file.endswith('.csv') for file in files):
+        # return
     
     title = get_title(path)
     new_lines = []

@@ -1,12 +1,13 @@
 import json
 import re
+import sys
 import ast
 import os
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 root_directory = 'data/'
-data_directory = './tcdata/alltxt'
+data_directory = '/tcdata/alltxt'
 
 def read_dict_from_file(file_name):
     file_path = os.path.join(data_directory, file_name)
@@ -115,9 +116,45 @@ class ReportSplitter:
         # print(section_infos)
         # print("")
 
+    
+def extract_file(file_path, output_path):
+    all_files = os.listdir(file_path)
+    pattern = re.compile(r"^[一二三四五六七八九十]+、(.*)")
+    sections = {}
+    clean_text = []
+    for file_name in all_files:
+        title = "None"
+        file_name = os.path.join(file_path, file_name)
+        with open(file_name, 'r', encoding='utf-8') as f:
+            for line in f.readlines():
+                line = re.sub(r'<Page:(\d+)>', r'\1', line)
+                line = ast.literal_eval(line)
+                if line['type'] == '页眉' or line['type'] == '页脚' or len(line['inside']) == 0:
+                    continue
+                clean_text.append(line['inside'])
+
+        for line in clean_text:
+            match = pattern.match(line)
+            if match:
+                title = match.group(1)
+                sections[title] = []
+            else:
+                if title != 'None':
+                    sections[title].append(line)
+    
+    with open(os.path.join(output_path, 'analysis.json'), 'w', encoding='utf-8') as f:
+        json.dump(sections,  f, ensure_ascii=False)
+
+
 
 
 file_names = os.listdir(data_directory)
+test_files = []
+with open('/tcdata/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            test_files.append(line.replace("\n", "").replace(".pdf", '.txt')) 
+
+file_names = [ file for file in file_names if file in test_files]
 
 total_files_len = len(file_names) 
 progress_bar = tqdm(total=total_files_len, desc='Processing files', unit='file', ncols=80, bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
@@ -127,7 +164,7 @@ def process_file(file_name):
     splitter = ReportSplitter(file_name)
     splitter.split_sections()
 
-with ProcessPoolExecutor(max_workers=24) as executor:
+with ProcessPoolExecutor(max_workers=4) as executor:
     futures = [executor.submit(process_file, file_name) for file_name in file_names]
 
     for future in tqdm(as_completed(futures), total=total_files_len):
@@ -140,3 +177,18 @@ with ProcessPoolExecutor(max_workers=24) as executor:
         progress_bar.update(1)
 
 progress_bar.close()
+
+# split analysis key into tables
+path = 'data/section_dirs'
+all_files = [os.path.join(path, file_name) for file_name in os.listdir(path)]
+
+for file_path in tqdm(all_files):
+    company_name = file_path.split('/')[-1].split('__')[-3]
+    year = file_path.split('/')[-1].split('__')[-2]
+    output_path = os.path.join('data/tables/', f'{company_name}__{year}')
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    try:
+        extract_file(file_path, output_path)
+    except Exception as e:
+        print(e)

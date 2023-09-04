@@ -26,7 +26,7 @@ def Int(str):
 
 def Float(str):
     return float(str.replace(',', ''))
-    
+
 def contain_table(table_name, file_paths):
     path_list = []
     for path in file_paths:
@@ -131,6 +131,8 @@ def search_financial_key(key, stat_dict, company_name, date):
     else:
         stat_dict[key] = double(search_table(company_name, date, key))
 
+    stat_dict[key] = '%.2f' % (stat_dict[key])
+
 class Parser:
 
     def __init__(self) -> None:
@@ -183,6 +185,8 @@ class Parser:
 
                 item['DATE'].sort()
                 
+                if f"{item['DATE'][0]}-{item['DATE'][1]}" in item['question']:
+                    item['DATE'] = list(range(item['DATE'][0], item['DATE'][-1]+1))
                 cur_TL = search_json(company_name, item['DATE'][0], "法定代表人")
                 date = int(item['DATE'][0]) + 1
                 ret_name = []
@@ -192,7 +196,6 @@ class Parser:
                     ret_name.append(TL)
                     if TL != cur_TL:
                         ret = '不相同'
-                        break
                 ret = ret + "|" + "|".join(ret_name)
             
             elif key == '企业名称':
@@ -212,6 +215,11 @@ class Parser:
                 
             else:
                 ret = search_json(company_name, date, key)
+
+                # 存在未提及的情况
+                if ret == "未提及":
+                    print(item['question'], "未提及")
+                    self.parse_analysis(item)
                 
             if isinstance(ret, str):
                 ret = ret.replace(',', '')
@@ -371,9 +379,9 @@ class Parser:
                 ret = 0
             
             if key in ['企业研发经费与利润比值', '企业研发经费与营业收入比值', '流动比率', '速动比率', '企业研发经费占费用比例', '企业硕士及以上人员占职工人数比例', '研发人员占职工人数比例']:
-                ret = '%.2f' % (ret) + '或者是%.2f' % (ret * 100) + '%'
+                ret = '%.2f' % (ret)
             else:
-                ret = '%.2f' % (ret * 100) + '%' + '或者是%.2f' % (ret)
+                ret = '%.2f' % (ret * 100) + '%'
 
         except Exception as e:
             if 'dir' not in e.__repr__():
@@ -401,25 +409,31 @@ class Parser:
                     full_name = name
                     break
 
-        question = item['question'].replace(date+"年", "").replace(full_name, "").replace(company_name, "")
+        question = item['question'].replace(date+"年", "").replace(full_name, "").replace(company_name, "").replace("年报数据", '')
         # 年份一起替换了 替换公司名为公司(full name and short name)
         #
         folder_path = os.path.join(f"./data/tables/{company_name}__{date}年")
         # 先去找 analysis.json if task_key in analysis key
-        try:
-            if os.path.exists(tmp:=os.path.join(folder_path, 'analysis.json')):
-                with open(tmp, 'r', encoding='utf-8') as f:
-                    analysis_dict = json.load(f)
-                    for dict_key in analysis_dict.keys():
-                        if key in dict_key or key in dict_key.replace('的', ''):
-                            item['stat_dict'][key] = analysis_dict[dict_key]
-                # 没有检索到对应的字段
-                if key not in item['stat_dict']:
-                    item['stat_dict'][key] = find_top5(folder_path, question)
-            else:
-                    item['stat_dict'][key] = find_top5(folder_path, question)
-        except Exception as e:
+        if not os.path.exists(folder_path):
             item['stat_dict'][key] = "没有查询到对应的信息,无法回答"
+        else:
+            try:
+                if key in ["情况", "分析", "原因", "简要介绍", "简要概述"]:
+                    item['stat_dict'][key] = find_top5(folder_path, question)
+                elif os.path.exists(tmp:=os.path.join(folder_path, 'analysis.json')):
+                    with open(tmp, 'r', encoding='utf-8') as f:
+                        analysis_dict = json.load(f)
+                        for dict_key in analysis_dict.keys():
+                            if key in dict_key or key in dict_key.replace('的', ''):
+                                item['stat_dict'][key] = [" ".join(analysis_dict[dict_key])]
+                    
+                    # 没有检索到对应的字段
+                    if key not in item['stat_dict']:
+                        item['stat_dict'][key] = find_top5(folder_path, question)
+                else:
+                        item['stat_dict'][key] = find_top5(folder_path, question)
+            except Exception as e:
+                item['stat_dict'][key] = "没有查询到对应的信息,无法回答"
 
     def parse_sql(self, item):
         """

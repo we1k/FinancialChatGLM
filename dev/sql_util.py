@@ -85,7 +85,9 @@ city_pattern = r"|".join(re.escape(city) for city in cities)
 location_pattern = re.compile(fr'({city_pattern})')
 
 # 编译关键词正则
-keyword_pattern = re.compile(r'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润)')
+financial_keys = list(set(FINANCIAL_KEY))
+financial_key_pattern = r"|".join(re.escape(key) for key in financial_keys)
+keyword_pattern = re.compile(fr'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润|{financial_key_pattern})')
 
 def parse_sql_task(samples):
     model_path = "/tcdata/chatglm2-6b-hug"

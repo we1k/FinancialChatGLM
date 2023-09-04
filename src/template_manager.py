@@ -26,9 +26,7 @@ class TemplateManager:
             # analysis_keys
             4 : PromptTemplate(
                 input_variables=["prompt", "question"],
-                template = "【任务说明和要求】 \n" \
-                        "本题是阅读理解题，读取并理解【背景知识】。 \n"
-                        "根据背景知识，简洁和专业的来回答问题，\n"
+                template ="根据背景知识，简洁和专业的来回答问题，\n"
                         "【背景知识】：{prompt}\n"
                         "【问题】：{question}\n答："
             ),

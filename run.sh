@@ -6,6 +6,7 @@
 echo "Good Luck!!"
 
 #1. 解析每个alltxt中对应的txt文件，获取三大基本表 + 公司信息 + 员工信息
+python dev/transfer_file.py
 python dev/extract_report.py
 
 #2. 建立数据库

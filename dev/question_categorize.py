@@ -53,7 +53,6 @@ def classify_questions(samples):
                 for item in key.split("和"):
                     task_key_set.add(item)
         samples[i]['task_key'] = list(task_key_set)
-        samples[i]['task_key'] = samples[i]['task_key']
         
         if len(samples[i]['task_key']) == 0:
             print(samples[i])
