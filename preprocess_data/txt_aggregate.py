@@ -1,13 +1,14 @@
 import json
 import re
+import os
 import sys
 import ast
-import os
+import shutil
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 root_directory = 'data/'
-data_directory = '/tcdata/alltxt'
+data_directory = 'data/alltxt'
 
 def read_dict_from_file(file_name):
     file_path = os.path.join(data_directory, file_name)
@@ -145,16 +146,13 @@ def extract_file(file_path, output_path):
     with open(os.path.join(output_path, 'analysis.json'), 'w', encoding='utf-8') as f:
         json.dump(sections,  f, ensure_ascii=False)
 
-
-
-
 file_names = os.listdir(data_directory)
 test_files = []
-with open('/tcdata/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             test_files.append(line.replace("\n", "").replace(".pdf", '.txt')) 
 
-file_names = [ file for file in file_names if file in test_files]
+file_names = [file for file in file_names if file in test_files]
 
 total_files_len = len(file_names) 
 progress_bar = tqdm(total=total_files_len, desc='Processing files', unit='file', ncols=80, bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
@@ -180,15 +178,20 @@ progress_bar.close()
 
 # split analysis key into tables
 path = 'data/section_dirs'
+output_dir = 'data/tables/'
 all_files = [os.path.join(path, file_name) for file_name in os.listdir(path)]
 
 for file_path in tqdm(all_files):
     company_name = file_path.split('/')[-1].split('__')[-3]
     year = file_path.split('/')[-1].split('__')[-2]
-    output_path = os.path.join('data/tables/', f'{company_name}__{year}')
+    output_path = os.path.join(output_dir, f'{company_name}__{year}')
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     try:
         extract_file(file_path, output_path)
     except Exception as e:
         print(e)
+
+# remove intermieda file
+if os.path.exists(path):
+    shutil.rmtree(path)

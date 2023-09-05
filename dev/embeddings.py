@@ -100,7 +100,7 @@ def get_vector(paths):
         json.dump(sentences, f, ensure_ascii=False)
 
 def find_top5(folderpath, question):#filepath是txt文件的路径，包含txt文件名，folderpath是table/公司名_年份
-    txt_path = '/tcdata/alltxt/'
+    txt_path = 'data/alltxt/'
     tmp = folderpath.split('/')[-1]
     for x in os.listdir(txt_path):
         if tmp in x:
@@ -152,10 +152,10 @@ def find_top5(folderpath, question):#filepath是txt文件的路径，包含txt�
     return context
 
 if __name__ == '__main__':
-    tablepath = './data/tables/'
-    txtpath = '/tcdata/alltxt/'
+    tablepath = 'data/tables/'
+    txtpath = 'data/alltxt/'
     dir_list = []
-    with open('/tcdata/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             dir_list.append(line.replace("\n", "").replace(".pdf", '.txt'))
 

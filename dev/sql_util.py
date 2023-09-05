@@ -72,12 +72,9 @@ def similarity_match(set, candidate_key):
         similar_word = sorted(similar_word, key=lambda x: -x[1])
     return similar_word[0][0]
 
-# pattern1 = re.compile(r'(\d+年)哪([一二三四五六七八九\d]+|)家上市公司，在(.+?)注册，(.+?)最高？金额为？')
-# pattern2 = re.compile(r'哪家上市公司，在(.+?)注册，(\d+年)(.+?)最高？金额为？')
 
 # 编译地点名正则  
 # 创建包含所有城市名称的正则表达式模式
-
 cities = list(set(CITIES))
 
 # 将城市名称列表转换为正则表达式模式，用于匹配
@@ -90,7 +87,7 @@ financial_key_pattern = r"|".join(re.escape(key) for key in financial_keys)
 keyword_pattern = re.compile(fr'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润|{financial_key_pattern})')
 
 def parse_sql_task(samples):
-    model_path = "/tcdata/chatglm2-6b-hug"
+    model_path = "model/chatglm2-6b-hug"
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_path, trust_remote_code=True).half().cuda()
 
@@ -118,6 +115,8 @@ def parse_sql_task(samples):
             if num not in ["2019", "2020", "2021"]:
                 sample["rank"] = flag * int(num)
         
+        if "低" in question and sample['rank'] > 0:
+            sample['rank'] = - sample['rank'] 
         # intersect 字段
         sample["intersect"] = False
         if "均位列" in question:

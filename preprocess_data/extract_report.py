@@ -59,8 +59,8 @@ def extract_report(path, output_dir):
         os.mkdir(output_dir)
     files = os.listdir(output_dir)
     # 避免重复提取
-    # if any(file.endswith('.csv') for file in files):
-        # return
+    if any(file.endswith('.csv') for file in files):
+        return
     
     title = get_title(path)
     new_lines = []
@@ -83,7 +83,6 @@ def extract_report(path, output_dir):
         if title.endswith('、利润表') or  title.endswith('、资产负债表'):
             return True
         return False
-    
     
     # extract different table
     tolerance = 0
@@ -134,22 +133,24 @@ def process_file(file_path):
     output_dir = f'data/tables/{company_name}__{year}'
     try:
         extract_report(file_path, output_dir)
-    except:
-        pass
+    except Exception as e:
+            print(f"Exception occurred: {e}")
 
 def main():
-    dir_path = '/tcdata/alltxt'
-    # dir_path = 'data/lines_txt/'
+    dir_path = 'data/alltxt'
+    table_path = 'data/tables'
+    if not os.path.exists(table_path):
+        os.mkdir(table_path)
+    
     file_paths = []
     test_name = []
-    with open('/tcdata/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             test_name.append(line.replace("\n", "").replace(".pdf", ".txt"))
     for path in os.listdir(dir_path):
         if path in test_name:
             file_paths.append(os.path.join(dir_path, path))
-    # num_processes = multiprocessing.cpu_count()
-    num_processes = 6
+    num_processes = 64
 
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(process_file, file_paths)

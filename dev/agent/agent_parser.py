@@ -11,9 +11,9 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 def post_process(output, percent=False):
     ret = float(output)
     if percent:
-        ret = str(round(100 * ret, 2)) + "%"
+        ret = '%.2f' % (100 * ret) + "%"
     else:
-        ret = str(round(ret, 2))
+        ret = '%.2f' % (ret)
 
     return ret
 

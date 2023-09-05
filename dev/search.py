@@ -182,6 +182,8 @@ class Parser:
                     elif "前两年" in item['question']:
                         item['DATE'].append(item['DATE'][0]-1)
                         item['DATE'].append(item['DATE'][0]-2)
+                    elif "前年" in item['question']:
+                        item['DATE'].append(item['DATE'][0]-2)
 
                 item['DATE'].sort()
                 
@@ -228,8 +230,6 @@ class Parser:
                 ret = '没有查询到对应的信息,无法回答'
             
         except Exception as e:
-            # 如果 dir not exist 无法回答
-            # 如果json not exist 可能是解析失败
             if 'dir' not in e.__repr__():
                 print(item['question'], e)
             ret = '没有查询到对应的信息,无法回答'
@@ -496,19 +496,19 @@ class Parser:
         item['SQLquery'] = item['SQLquery'] + " ORDER BY " + key
         if item['range'] == True:
             if item['rank'] > 0:
-                item['SQLquery'] = item['SQLquery'] + " DESC LIMIT " + str(item['rank'])
+                item['SQLquery'] = item['SQLquery'] + " DESC NULLS LAST LIMIT " + str(item['rank']) 
             else:
-                item['SQLquery'] = item['SQLquery'] + " ASC LIMIT " + str(abs(item['rank']))
+                item['SQLquery'] = item['SQLquery'] + " ASC NULLS LAST LIMIT " + str(abs(item['rank'])) 
         elif abs(item['rank']) > 1:
             if item['rank'] > 0:
-                item['SQLquery'] = item['SQLquery'] + " DESC LIMIT 1 OFFSET " + str(item['rank'] - 1)
+                item['SQLquery'] = item['SQLquery'] + " DESC NULLS LAST LIMIT 1 OFFSET " + str(item['rank'] - 1) 
             else:
-                item['SQLquery'] = item['SQLquery'] + " ASC LIMIT 1 OFFSET " + str(abs(item['rank']) - 1)
+                item['SQLquery'] = item['SQLquery'] + " ASC NULLS LAST LIMIT 1 OFFSET " + str(abs(item['rank']) - 1) 
         else:
             if item['rank'] > 0:
-                item['SQLquery'] = item['SQLquery'] + " DESC LIMIT 1"
+                item['SQLquery'] = item['SQLquery'] + " DESC NULLS LAST LIMIT 1"
             else:
-                item['SQLquery'] = item['SQLquery'] + " ASC LIMIT 1"
+                item['SQLquery'] = item['SQLquery'] + " ASC NULLS LAST LIMIT 1"
         
 
         ###
@@ -521,7 +521,7 @@ class Parser:
             item['SQLquery'] = " INTERSECT ".join(sql_querys)
 
         # 执行SQL
-        conn = sqlite3.connect('./company.db')
+        conn = sqlite3.connect('data/company.db')
         cursor = conn.cursor()
         try:
             cursor.execute(item['SQLquery'])
@@ -581,28 +581,5 @@ def parse_question(path='./data/parse_question.json'):
 
 # puts into language model dataset
 
-def reconstruct_dataset():
-    results = []
-    with open('data/result1.json', 'r', encoding='utf-8') as f1, open('data/dataset.json', 'r', encoding='utf-8') as f2:
-        for line, answer in zip(f1.readlines(),f2.readlines()):
-            result = json.loads(line)
-            dataset = json.loads(answer)
-            result['prompt'] = dataset['prompt']
-            result['target'] = result['prompt']
-            result['category'] = dataset['category']
-            if result['prompt'] == '':
-                result['target'] = result['answer']
-                result['prompt'] = '没有查询到对应的信息'
-            
-            if result['target'] == "":
-                result['target'] = "没有查询到对应的信息，根据以上信息无法回答"
-            
-            result.pop('id')
-            result.pop('answer')
-            results.append(result)
-    
-    with open('data/smp2023/dataset.json', 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False)
-        
 if __name__ == '__main__':
     parse_question()

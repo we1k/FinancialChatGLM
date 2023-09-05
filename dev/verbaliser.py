@@ -24,7 +24,7 @@ ratio_key_dict = {
 
 def make_key_label(category, key, stat_dict, company_name, date, company_names_dict):
     if stat_dict[key] == f"没有查询到对应的信息,无法回答":
-        return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息."
+        return f"没有查询到{int(date[0])}年{company_name}对应的{key}的有关信息。"
     template = f"NOT implement"
     # special question
     if category == 0:
@@ -32,43 +32,51 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
     
     # basic info
     elif category == 1:
+        DATE = date
         date = int(date[0])
         if key == "控股股东是否发生变更":
             if stat_dict[key] == "相同":
-                template = f"{company_name}在{date}的控股股东没有变更"
+                template = f"{company_name}在{date}年的控股股东没有变更"
             elif stat_dict[key] == "不同":
-                template = f"{company_name}在{date}的控股股东发生了变更"
+                template = f"{company_name}在{date}年的控股股东发生了变更"
                 
         elif key == '法定代表人是否相同':
             ret = stat_dict[key].split('|')
             if ret[0] == '相同':
-                template = f"{company_name}在{date}与{date+1}的法定代表人是相同，法定代表人均是{ret[1]}。"
+                template = f"{company_name}在{DATE[0]}年到{DATE[-1]}年的法定代表人是相同，法定代表人均是{ret[1]}。"
             elif ret[0] == '不相同':
-                template = f"{company_name}在{date}与{date+1}的法定代表人是不相同的。在{date}的法定代表人是{ret[1]}，在{date+1}的法定代表人是{ret[2]}。"
+                template = f"{company_name}在{DATE[0]}年到{DATE[-1]}年的法定代表人是不相同的。"
+                for i, name in enumerate(ret[1:]):
+                    template += f"在{DATE[i]}年的法定代表人是{name}。"
+
         elif key in ['职工总数', '技术人员数', '博士及以上', '硕士人数', '研发人员数', '销售人员数']:
-            template = f"{company_name}在{date}的{key}是{stat_dict[key]}人。"
+            template = f"{company_name}在{date}年的{key}是{stat_dict[key]}人。"
         elif key == "面临退市":
             if stat_dict[key] == '适用':
-                template = f"{company_name}在{date}的{key}适用。公司面临退市的风险。"
+                template = f"{company_name}在{date}年，公司有面临退市的风险。"
             elif stat_dict[key] == '不适用':
-                template = f"{company_name}在{date}的{key}情况不适用。公司报告期不存在面临终止上市的情况。"
+                template = f"{company_name}在{date}年。公司报告期不存在面临退市或终止上市的情况。"
             elif stat_dict[key] == '未提及':
-                template = f"{company_name}在{date}的{key}情况没有提到相关内容"
+                template = f"{company_name}在{date}年的{key}情况没有提到相关内容。"
 
         elif key == "处罚及整改":
             if stat_dict[key] == '适用':
-                template = f"{company_name}在{date}的{key}适用。公司有相关的处罚及整改"
+                template = f"{company_name}在{date}年，公司有相关的处罚及整改的情况。"
             elif stat_dict[key] == '不适用':
-                template = f"{company_name}在{date}的{key}情况不适用。公司报告期不存在处罚及整改情况。"
+                template = f"{company_name}在{date}年，公司报告期不存在处罚及整改情况。"
+            elif stat_dict[key] == '未提及':
+                template = f"{company_name}在{date}年的{key}情况没有提到相关内容。"
 
         elif key == "破产重整相关":
             if stat_dict[key] == '适用':
-                template = f"{company_name}在{date}的{key}适用。公司有相关的破产重整的风险"
+                template = f"{company_name}在{date}年的{key}，公司有相关的破产重整的风险。"
             elif stat_dict[key] == '不适用':
-                template = f"{company_name}在{date}的{key}情况不适用。公司报告期未发生破产重整相关事项。"
+                template = f"{company_name}在{date}年的{key}。公司报告期未发生破产重整相关事项。"
+            elif stat_dict[key] == '未提及':
+                template = f"{company_name}在{date}年的{key}情况没有提到相关内容"
 
         else:
-            template = f"{company_name}在{date}的{key}是{stat_dict[key]}。"
+            template = f"{company_name}在{date}年的{key}是{stat_dict[key]}。"
     
     # ratio keys
     elif category == 2:
@@ -130,13 +138,18 @@ def make_key_label(category, key, stat_dict, company_name, date, company_names_d
     elif category == 5:
         date = int(date[0])
         if len(stat_dict[key]) == 0:
-            template = f"在{date}年的满足{key}题目要求的上市公司是{stat_dict[key]}"
+            template = f"{date}年，没有上市公司满足在的{key}题目要求的。"
         else:
             template = f"在{date}年的满足{key}题目要求的上市公司有:"
             for ans in stat_dict[key]:
-                template += f"{company_names_dict[ans[0]]}，简称{ans[0]}。"
+                
+                template += f"{company_names_dict.get(ans[0], '不清楚公司名')}。"
                 if len(ans) > 1:
-                    template += f"金额是{str(ans[1]) + '元'}。"
+                    if isinstance(ans[1], float):
+                        round_ret = str(ans[1]) + '0' * (2 - len(str(ans[1]).split('.')[1]))
+                        template += f"金额是{round_ret + '元'}。"
+                    else:
+                        template += f"金额是{str(ans[1]) + '元'}。"
                     
 
     elif stat_dict == None:
@@ -163,6 +176,17 @@ def make_label(samples):
         stat_dict = sample['stat_dict']
 
         
-        for key in keys:
-            template = make_key_label(sample['category'], key, stat_dict, company_name, date, company_names_dict)
+        if len(keys) == 1:
+            template = make_key_label(sample['category'], keys[0], stat_dict, company_name, date, company_names_dict)
             sample['prompt'] += template
+        else:
+            sample['prompt'] = f"{company_name}在{date[0]}年的"
+            for key in keys:
+                template = make_key_label(sample['category'], key, stat_dict, company_name, date, company_names_dict)
+                if template.startswith(f"{company_name}在{date[0]}年的"):
+                    sample['prompt'] += template.replace(f"{company_name}在{date[0]}年的", "")
+                else:
+                    sample['prompt'] += f"{key}没有相关信息。"
+
+        if company_names_dict.get(company_name, "None") in sample['question']:
+            sample['prompt'] = sample['prompt'].replace(company_name, company_names_dict[company_name])

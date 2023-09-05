@@ -6,17 +6,17 @@ __pycache__/
 
 output/*
 log/*
-checkpoint/*
 
 pyrightconfig.json
 .vscode
-checkpoint
-FinanceChatGLM
 tcdata
+test
 
 data/lines_txt/*
+data/section_dirs/*
 data/tables/*
+data/_tables/*
 
 # output file
 output.json
-local_run.sh
+company.db

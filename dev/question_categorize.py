@@ -24,8 +24,6 @@ def has_keys(str, keys):
             return True
     return False
 
-special_questions = []
-unrecog_questions = []
 
 def verbaliser(_str):
     _str = _str.replace('的', '').replace(' ', '').replace('所占', '占').replace('上费用', '费用').replace('总费用', '费用').replace('学历', '').replace('以及', '和').replace('控股股东、实际控制人', '控股股东、实控人')
@@ -89,7 +87,6 @@ def re_classify_question(sample):
     sample['prompt'] = ''
     if not has_digit(question):
         sample['category'] = 0
-        special_questions.append(sample)
         sample['task_key'] = '特殊问题'
                 
      # sql key
@@ -133,11 +130,8 @@ def re_classify_question(sample):
 
     else:
         # 使用fuzzywuzzy提取关键词
-
-
         sample['category'] = 0
         sample['task_key'] = '特殊问题'
-        unrecog_questions.append(sample)
 
     if not isinstance(sample['task_key'], list):
         sample['task_key'] = [sample['task_key']]

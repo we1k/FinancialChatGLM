@@ -4,12 +4,24 @@ import re
 import json
 import csv
 
-debtkey = ['公司名称', '年份', '注册地址', '负债合计', '应付职工薪酬', '资产总计', '流动资产合计', '非流动资产合计', '应收款项融资', '货币资金', 
+path = './data/tables/'
+
+debtkey = ['公司名称', '年份', '注册地址', '负债合计', '应付职工薪酬', 
+           '资产总计', '流动资产合计', '非流动资产合计', 
+           '应收款项融资', '货币资金', 
             '衍生金融资产', '其他非流动金融资产',
+            '流动负债合计', '非流动负债合计',
             '固定资产', '无形资产', '存货', '实收资本', '股本',
             '交易性金融资产', '应收账款', '预付款项', '应付账款', 
-            '其他流动资产', '其他非流动资产', '短期借款', '在建工程', '资本公积',
-            '盈余公积', '未分配利润', '递延所得税负债']
+            '其他流动资产', '其他非流动资产', '短期借款', '长期借款',
+            '在建工程', '资本公积',
+            '盈余公积', '未分配利润', '递延所得税负债',
+            '应收票据', '应付票据',
+            '应交税费', '所有者权益合计', 
+            '负债和所有者权益总计', '商誉',
+            '长期应收款', '长期股权投资', '租赁负债',
+            '资本支出', '资产减值损失', '债权投资',
+            ]
 
 profitkey = ['公司名称', '年份', '注册地址', '营业利润', '营业成本', '营业收入',
             '营业外支出', '营业外收入',
@@ -22,7 +34,8 @@ profitkey = ['公司名称', '年份', '注册地址', '营业利润', '营业�
             '联营企业和合营企业投资收益',
             '公允价值变动收益',
             '信用减值损失', '资产减值损失', '资产处置收益',
-            '持续经营净利润', '营业总收入', '营业总成本']
+            '持续经营净利润', '营业总收入', '营业总成本',
+            '营业外收支净额', '归属于母公司所有者权益合计',]
 
 cashkey = ['公司名称', '年份', '注册地址', '收回投资收到现金', '现金及现金等价物余额', 
             '投资支付', '经营活动现金流入', '经营活动现金流出',
@@ -39,142 +52,159 @@ keymapping = {
     "非流动资产" : "非流动资产合计",
 }
 
-path = './data/tables/'
 
 def create_debt(foldername):
-    try:
-        empty_debt = [0] * (len(debtkey))
-        for filename in os.listdir(path+foldername):
-            if re.match("基本信息表.json", filename):
-                with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
-                    json_data = json.load(fd)
-                    empty_debt[0] = json_data['文档公司名']
-                    empty_debt[1] = int(json_data['年份'].strip('年'))
-                    empty_debt[2] = json_data['注册地址']
-            if re.match(".*合并资产负债表.*\.csv", filename):
-                with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
-                    sheet = csv.reader(fd)
-                    header = next(sheet)
-                    table = []
-                    index1 = -1
-                    index2 = -1
-                    for index,it in enumerate(header):
-                        if re.match('项目', it.replace(' ','')):
-                            index1 = index
-                        if re.match('%d年12月31日'%(empty_debt[1]), it.replace(' ','')):
-                            index2 = index
-                    if index1 == -1 or index2 == -1:
-                        continue
-                    for row in sheet:
-                        table.append([row[index1], row[index2]])
-                    for i in range(3, len(debtkey)):
-                        minlength = 99
-                        for item in table:
-                            if debtkey[i] in item[0]:
-                                if len(item[0]) < minlength:
-                                    if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
+    empty_debt = [float('NaN')] * (len(debtkey))
+    empty_debt[0] = foldername.split('__')[0]
+    empty_debt[1] = int(foldername.split('__')[1].strip('年'))
+    for filename in os.listdir(path+foldername):
+        if re.match("基本信息表.json", filename):
+            with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
+                json_data = json.load(fd)
+                empty_debt[0] = json_data['文档公司名']
+                empty_debt[1] = int(json_data['年份'].strip('年'))
+                empty_debt[2] = json_data['注册地址']
+        if re.match(".*合并资产负债表.*\.csv", filename):
+            with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
+                sheet = csv.reader(fd)
+                header = next(sheet)
+                table = []
+                index1 = -1
+                index2 = -1
+                for index,it in enumerate(header):
+                    if re.match('项目', it.replace(' ','')):
+                        index1 = index
+                    if re.match('%d年12月31日'%(empty_debt[1]), it.replace(' ','')):
+                        index2 = index
+                if index1 == -1 or index2 == -1:
+                    continue
+                for row in sheet:
+                    table.append([row[index1], row[index2]])
+                for i in range(3, len(debtkey)):
+                    minlength = 99
+                    for item in table:
+                        if debtkey[i] in item[0]:
+                            if len(item[0]) < minlength:
+                                if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
+                                    empty_debt[i] = 0
+                                else:
+                                    tmp = item[1].replace(' ','').replace(',','').strip('(').strip(')').strip('（').strip('）')
+                                    if len(tmp) < 1:
                                         empty_debt[i] = 0
                                     else:
-                                        empty_debt[i] = float(item[1].replace(' ','').replace(',','').strip('(').strip(')'))
-                                    minlength = len(item[0])
-        #print('INSERT INTO debt VALUES (%s)'%(str(empty_debt).strip('[').strip(']')))
-        # break
-        #cursor.execute('INSERT INTO debt VALUES (%s)'%(str(empty_debt).strip('[').strip(']')))
-        #conn.commit()
-        return 'INSERT INTO debt VALUES (%s)'%(str(empty_debt).strip('[').strip(']'))
-    except ValueError as err:
+                                        if tmp.find('.') >= 0 and len(tmp) > tmp.find('.') + 3:
+                                            tmp = tmp[:tmp.find('.')+3]
+                                        empty_debt[i] = float(tmp)
+                                minlength = len(item[0])
+    if empty_debt[0] == float('NaN'):
         print(foldername)
-        print(err)
         return ''
+    return 'INSERT INTO debt VALUES (%s)'%(str(empty_debt).strip('[').strip(']'))
+
 
 def create_profit(foldername):
-    try:
-        empty_profit = [0] * (len(profitkey))
-        for filename in os.listdir(path+foldername):
-            if re.match("基本信息表.json", filename):
-                with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
-                    json_data = json.load(fd)
-                    empty_profit[0] = json_data['文档公司名']
-                    empty_profit[1] = int(json_data['年份'].strip('年'))
-                    empty_profit[2] = json_data['注册地址']
-            if re.match(".*合并利润表.*\.csv", filename):
-                with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
-                    sheet = csv.reader(fd)
-                    header = next(sheet)
-                    table = []
-                    index1 = -1
-                    index2 = -1
-                    for index,it in enumerate(header):
-                        if re.match('项目', it.replace(' ','')):
-                            index1 = index
-                        if re.match('%d年度'%(empty_profit[1]), it.replace(' ','')):
-                            index2 = index
-                    if index1 == -1 or index2 == -1:
-                        continue
-                    for row in sheet:
-                        table.append([row[index1], row[index2]])
-                    for i in range(3, len(profitkey)):
-                        minlength = 99
-                        for item in table:
-                            if profitkey[i] in item[0] or (keymapping.get(profitkey[i], "None") in item[0]):
-                                if len(item[0]) < minlength:
-                                    if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
+    empty_profit = [float('NaN')] * (len(profitkey))
+    empty_profit[0] = foldername.split('__')[0]
+    empty_profit[1] = int(foldername.split('__')[1].strip('年'))
+    for filename in os.listdir(path+foldername):
+        if re.match("基本信息表.json", filename):
+            with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
+                json_data = json.load(fd)
+                empty_profit[0] = json_data['文档公司名']
+                empty_profit[1] = int(json_data['年份'].strip('年'))
+                empty_profit[2] = json_data['注册地址']
+        if re.match(".*合并利润表.*\.csv", filename):
+            with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
+                sheet = csv.reader(fd)
+                header = next(sheet)
+                table = []
+                index1 = -1
+                index2 = -1
+                for index,it in enumerate(header):
+                    if re.match('项目', it.replace(' ','')):
+                        index1 = index
+                    if re.match('%d年度'%(empty_profit[1]), it.replace(' ','')):
+                        index2 = index
+                if index1 == -1 or index2 == -1:
+                    continue
+                for row in sheet:
+                    table.append([row[index1], row[index2]])
+                for i in range(3, len(profitkey)):
+                    minlength = 99
+                    for item in table:
+                        if profitkey[i] in item[0] or (keymapping.get(profitkey[i], "None") in item[0]):
+                            if len(item[0]) < minlength:
+                                if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
+                                    empty_profit[i] = 0
+                                else:
+                                    tmp = item[1].replace(' ','').replace(',','').strip('(').strip(')').strip('（').strip('）')
+                                    if len(tmp) < 1:
                                         empty_profit[i] = 0
                                     else:
-                                        empty_profit[i] = float(item[1].replace(' ','').replace(',','').strip('(').strip(')'))
-                                    minlength = len(item[0])
-        return 'INSERT INTO profit VALUES (%s)'%(str(empty_profit).strip('[').strip(']'))
-    except ValueError as err:
-        print(foldername)
-        print(err)
+                                        if tmp.find('.') >= 0 and len(tmp) > tmp.find('.') + 3:
+                                            tmp = tmp[:tmp.find('.')+3]
+                                        empty_profit[i] = float(tmp)
+                                minlength = len(item[0])
+    if empty_profit[0] == float('NaN'):
         return ''
+    return 'INSERT INTO profit VALUES (%s)'%(str(empty_profit).strip('[').strip(']'))
+
 
 def create_cash(foldername):
-    try:
-        empty_cash = [0] * len(cashkey)
-        for filename in os.listdir(path+foldername):
-            if re.match("基本信息表.json", filename):
-                with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
-                    json_data = json.load(fd)
-                    empty_cash[0] = json_data['文档公司名']
-                    empty_cash[1] = int(json_data['年份'].strip('年'))
-                    empty_cash[2] = json_data['注册地址']
-            if re.match(".*合并现金流量表.*\.csv", filename):
-                with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
-                    sheet = csv.reader(fd)
-                    header = next(sheet)
-                    table = []
-                    index1 = -1
-                    index2 = -1
-                    for index,it in enumerate(header):
-                        if re.match('项目', it.replace(' ','')):
-                            index1 = index
-                        if re.match('%d年度'%(empty_cash[1]), it.replace(' ','')):
-                            index2 = index
-                    if index1 == -1 or index2 == -1:
-                        continue
-                    for row in sheet:
-                        table.append([row[index1], row[index2]])
-                    for i in range(3, len(cashkey)):
-                        minlength = 99
-                        for item in table:
-                            if cashkey[i] in item[0] or (keymapping.get(profitkey[i], "None") in item[0]):
-                                if len(item[0]) < minlength:
-                                    if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
+    empty_cash = [float('NaN')] * len(cashkey)
+    empty_cash[0] = foldername.split('__')[0]
+    empty_cash[1] = int(foldername.split('__')[1].strip('年'))
+    for filename in os.listdir(path+foldername):
+        if re.match("基本信息表.json", filename):
+            with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
+                json_data = json.load(fd)
+                empty_cash[0] = json_data['文档公司名']
+                empty_cash[1] = int(json_data['年份'].strip('年'))
+                empty_cash[2] = json_data['注册地址']
+        if re.match(".*合并现金流量表.*\.csv", filename):
+            with open(os.path.join(path+foldername, filename), 'r',encoding='utf-8') as fd:
+                sheet = csv.reader(fd)
+                header = next(sheet)
+                table = []
+                index1 = -1
+                index2 = -1
+                for index,it in enumerate(header):
+                    if re.match('项目', it.replace(' ','')):
+                        index1 = index
+                    if re.match('%d年度'%(empty_cash[1]), it.replace(' ','')):
+                        index2 = index
+                if index1 == -1 or index2 == -1:
+                    continue
+                for row in sheet:
+                    table.append([row[index1], row[index2]])
+                for i in range(3, len(cashkey)):
+                    minlength = 99
+                    for item in table:
+                        if cashkey[i] in item[0] or (keymapping.get(profitkey[i], "None") in item[0]):
+                            if len(item[0]) < minlength:
+                                if re.match("-+[^0-9]", item[1]+" ") or "－" in item[1] or '不适用' in item[1] or '/' in item[1]:
+                                    empty_cash[i] = 0
+                                else:
+                                    tmp = item[1].replace(' ','').replace(',','').strip('(').strip(')').strip('（').strip('）')
+                                    if len(tmp) < 1:
                                         empty_cash[i] = 0
                                     else:
-                                        empty_cash[i] = float(item[1].replace(' ','').replace(',','').strip('(').strip(')'))
-                                    minlength = len(item[0])
-        return 'INSERT INTO cash VALUES (%s)'%(str(empty_cash).strip('[').strip(']'))
-    except ValueError as err:
-        print(foldername)
-        print(err)
+                                        if tmp.find('.') >= 0 and len(tmp) > tmp.find('.') + 3:
+                                            tmp = tmp[:tmp.find('.')+3]
+                                        empty_cash[i] = float(tmp)
+                                minlength = len(item[0])
+    if empty_cash[0] == float('NaN'):
         return ''
+    return 'INSERT INTO cash VALUES (%s)'%(str(empty_cash).strip('[').strip(']'))
+
 
 def create_db():
-    if os.path.exists('company.db'):
-        os.remove('company.db')
-    conn = sqlite3.connect('company.db')
+
+    print("*" * 50)
+    print("Staring Build DataBase")
+    if os.path.exists('data/company.db'):
+        os.remove('data/company.db')
+    conn = sqlite3.connect('data/company.db')
 
     # 创建游标对象
     cursor = conn.cursor()
@@ -214,28 +244,37 @@ def create_db():
     # for foldername in os.listdir(path):
     #     command = create_profit(foldername)
 
-    with open('/tcdata/C-list-pdf-name.txt','r',encoding='utf-8') as f:
+    with open('data/C-list-pdf-name.txt','r',encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
-            parts = line.split('__')
-            foldername = parts[3] + '__' + parts[4]
-            #print(parts[3] + '__' + parts[4])
-            command = create_debt(foldername)
-            #print(command)
-            if len(command) > 0:
-                cursor.execute(command)
-            
-            command = create_profit(foldername)
-            #print(command)
-            if len(command) > 0:
-                cursor.execute(command)
-            
-            command = create_cash(foldername)
-            #print(command)
-            if len(command) > 0:
-                cursor.execute(command)
-            
-            conn.commit()
+            try:
+                parts = line.split('__')
+                foldername = parts[3] + '__' + parts[4]
+                #print(parts[3] + '__' + parts[4])
+                command = create_debt(foldername).replace('?', '')
+                command = command.replace('nan', '?')
+
+                if len(command) > 0:
+                    params = [None] * command.count('?')
+                    cursor.execute(command, params)
+                
+                command = create_profit(foldername).replace('?', '')
+                command = command.replace('nan', '?')
+
+                if len(command) > 0:
+                    params = [None] * command.count('?')
+                    cursor.execute(command, params)
+                
+                command = create_cash(foldername).replace('?', '')
+                command = command.replace('nan', '?')
+
+                if len(command) > 0:
+                    params = [None] * command.count('?')
+                    cursor.execute(command, params)
+                
+                conn.commit()
+            except Exception as err:
+                print(foldername, err)
     # test on db
     # cursor.execute("SELECT 公司名称, 年份, 货币资金 FROM debt ORDER BY 货币资金 DESC LIMIT 10")
     # rows = cursor.fetchall()
