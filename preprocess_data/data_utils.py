@@ -7,7 +7,7 @@ import pandas as pd
 
 def extract_basic_info():
     # readin the basic information json 
-    with open('./data/basic_information.json', 'r', encoding='utf-8') as f:
+    with open('data/basic_information.json', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             record = json.loads(line)
             name = record['文档公司名']
@@ -62,7 +62,7 @@ def get_dataset():
             # f.write(json.dumps(result, ensure_ascii=False)+'\n')
 
 def get_company_name():
-    folder_path = 'data/chatglm_llm_fintech_raw_dataset/allpdf'
+    folder_path = 'data/allpdf'
     # 获取文件夹内所有文件名称
     file_names = glob.glob(folder_path + '/*')
     file_names = sorted(file_names, reverse=True)

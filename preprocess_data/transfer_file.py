@@ -388,7 +388,7 @@ if __name__ == '__main__':
     l = multiprocessing.Lock()
     pool = multiprocessing.Pool(processes=6)
     dir_list = []
-    with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('data/list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             dir_list.append(line.replace("\n", "").replace(".pdf", '.txt'))
     txt_list = [x for x in dir_list if re.match('20.*txt', x)]

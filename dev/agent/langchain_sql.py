@@ -38,7 +38,8 @@ CUSTOM_PROMPT = PromptTemplate(
     input_variables=["input"], template=TEMPLATE
 )
 
-db = SQLDatabase.from_uri("sqlite:////home/lzw/project/smp-docker/data/company.db")
+# 使用相对路径
+db = SQLDatabase.from_uri("sqlite:///data/company.db")
 chain = create_sql_query_chain(llm=llm, db=db)
 
 db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)

@@ -144,7 +144,7 @@ def main():
     
     file_paths = []
     test_name = []
-    with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('data/list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             test_name.append(line.replace("\n", "").replace(".pdf", ".txt"))
     for path in os.listdir(dir_path):

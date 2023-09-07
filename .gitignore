@@ -165,21 +165,13 @@ output/*
 log/*
 .chroma
 content/*
-api_content/*
 data/*
-tables/*
-data/lines_txt/*
 
-llm/*
-embedding/*
 
 *.txt
 pyrightconfig.json
-model
+model/*
 .vscode
-llm_demo
-checkpoint
-flagged
 TODO
 FinanceChatGLM
 tcdata

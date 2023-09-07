@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=2,3 torchrun \
     --master_port 29500 \
      ./src/train_bash.py \
     --stage sft \
-    --model_name_or_path ./tcdata/chatglm2-6b-hug \
+    --model_name_or_path THUDM/chatglm2-6b \
     --do_predict \
     --dataset SMP \
     --dataset_dir ./data \

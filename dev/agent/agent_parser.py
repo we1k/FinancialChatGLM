@@ -24,9 +24,10 @@ class Agent_Parser:
     def __init__(self) -> None:
         ## 开启api
         endpoint_url = ("http://127.0.0.1:29501")
-        model_path = "./model/opus-mt-zh-en"
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model_path = "Helsinki-NLP/opus-mt-zh-en"
+        # model_path = "model/opus-mt-zh-en"
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.translator = pipeline("translation_zh_to_en", model=self.model, tokenizer=self.tokenizer)
         self.llm = ChatGLM(
             endpoint_url=endpoint_url,

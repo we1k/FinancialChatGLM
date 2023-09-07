@@ -59,7 +59,7 @@ class Seq2SeqTrainerForChatGLM(PeftTrainer):
         decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
 
         res = []
-        with open('data/C-list-question.json', 'r', encoding='utf-8') as f:
+        with open('data/list-question.json', 'r', encoding='utf-8') as f:
             for line, pred in zip(f.readlines(), decoded_preds):
                 sample = json.loads(line)
                 sample['answer'] = pred

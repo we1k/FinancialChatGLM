@@ -244,7 +244,7 @@ def create_db():
     # for foldername in os.listdir(path):
     #     command = create_profit(foldername)
 
-    with open('data/C-list-pdf-name.txt','r',encoding='utf-8') as f:
+    with open('data/list-pdf-name.txt','r',encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             try:

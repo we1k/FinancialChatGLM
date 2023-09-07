@@ -91,8 +91,7 @@ def get_vector(paths):
     sentences = split_text_short(text)
 
     #Sentences are encoded by calling model.encode()
-    # model = SentenceTransformer('moka-ai/m3e-base')
-    model = SentenceTransformer('./model/m3e-base')
+    model = SentenceTransformer('moka-ai/m3e-base')
     embeddings = model.encode(sentences)
     #save file
     np.save(vector_path, embeddings)
@@ -118,7 +117,7 @@ def find_top5(folderpath, question):#filepath是txt文件的路径，包含txt�
         read_sentense = json.load(fd)
     read_vector = np.load(vector_path)
 
-    model = SentenceTransformer('./model/m3e-base')
+    model = SentenceTransformer('moka-ai/m3e-base')
 
     q_embeddings = model.encode(question)
     #print(len(q_embeddings[0]))
@@ -155,7 +154,7 @@ if __name__ == '__main__':
     tablepath = 'data/tables/'
     txtpath = 'data/alltxt/'
     dir_list = []
-    with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+    with open('data/list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             dir_list.append(line.replace("\n", "").replace(".pdf", '.txt'))
 

@@ -87,7 +87,7 @@ financial_key_pattern = r"|".join(re.escape(key) for key in financial_keys)
 keyword_pattern = re.compile(fr'(负债总金额|负债总额|资产总金额|资产总额|货币总额|总负债|总资产|营业成本|货币资金|营业收入|利润总额|净利润|营业外收入|流动资产|其他流动资产|其他非流动资产|其他非流动金融资产|营业利润|{financial_key_pattern})')
 
 def parse_sql_task(samples):
-    model_path = "model/chatglm2-6b-hug"
+    model_path = "THUDM/chatglm2-6b"
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_path, trust_remote_code=True).half().cuda()
 

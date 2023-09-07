@@ -148,7 +148,7 @@ def extract_file(file_path, output_path):
 
 file_names = os.listdir(data_directory)
 test_files = []
-with open('data/C-list-pdf-name.txt', 'r', encoding='utf-8') as f:
+with open('data/list-pdf-name.txt', 'r', encoding='utf-8') as f:
         for line in f.readlines():
             test_files.append(line.replace("\n", "").replace(".pdf", '.txt')) 
 

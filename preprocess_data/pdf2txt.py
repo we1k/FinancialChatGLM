@@ -151,16 +151,17 @@ class PDFProcessor:
             with open(path, 'a+', encoding='utf-8') as file:
                 file.write(str(self.all_text[key]) + '\n')
 
-def process_all_pdfs_in_folder(folder_path):
+def process_all_pdfs_in_folder(folder_path, save_folder_path):
     file_paths = glob.glob(f'{folder_path}/*')
     file_paths = sorted(file_paths, reverse=True)
 
     for file_path in file_paths:
         processor = PDFProcessor(file_path)
         processor.process_pdf()
-        save_path = 'D:\\test_txt3\\' + file_path.split('\\')[-1].replace('.pdf', '_1.txt')
+        save_path = save_folder_path + file_path.split('/')[-1].replace('.pdf', '.txt')
         processor.save_all_text(save_path)
 
 
-folder_path = 'D:\\test_data3'
-process_all_pdfs_in_folder(folder_path)
+folder_path = 'data/allpdf'
+save_folder_path = 'data/alltxt2'
+process_all_pdfs_in_folder(folder_path, save_folder_path)
