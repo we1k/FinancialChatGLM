@@ -165,14 +165,14 @@ output/*
 log/*
 .chroma
 content/*
-data/*
 
+data/tables/*
+data/alltxt/*
+data/company.db
 
-*.txt
 pyrightconfig.json
 model/*
 .vscode
 TODO
 FinanceChatGLM
-tcdata
 test

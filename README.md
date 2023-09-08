@@ -26,6 +26,11 @@ pip install -r requirements.txt & bash run.sh
 ```
 python preprocess_data/pdf2txt.py
 ```
+或者
+```
+wget -P ./data https://sail-moe.oss-cn-hangzhou.aliyuncs.com/open_data/hackathon_chatglm_fintech/alltxt.zip & unzip alltxt.zip
+
+```
 
 此时获取data/lines_txt所有处理好的txt文件
 
